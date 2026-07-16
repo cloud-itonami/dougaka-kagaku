@@ -57,7 +57,19 @@ AI は計算を時々、堂々と間違える。そこで台本中の**すべて
 # テスト（nbb が第一経路。JVM は互換）
 nbb --classpath src:test test/run.cljs
 clojure -M:test
+
+# episode 横断 self-audit（全 content/*.edn の健全性を機械検査、CI ゲート）
+nbb --classpath src tools/audit.cljs
+
+# 1 episode を full-produce E2E（compose→…→render-video の純データ経路を畳む）
+nbb --classpath src tools/run_episode.cljs content/tsuki-half-distance.edn
+
+# 次に作る topic を選定（priorityScore + series ローテーション）
+nbb --classpath src tools/next_topic.cljs
 ```
+
+CI（`.github/workflows/ci.yml`）は push / PR で上記の nbb テスト + self-audit を
+回し、episode 追加時の回帰を機械保証する。
 
 実 IO（solver 実行 / VOICEVOX / ComfyUI / YouTube / D1）はこのリポジトリに
 置かない。yukkuri と同じく実行系は `:exec` 側（cae.solver hosts / murakumo

@@ -405,3 +405,35 @@ episode 3本、self-audit mean-score 97%（citation 2件 PENDING が唯一の減
 **Next**: 実 IO 配線の一歩（VOICEVOX localhost:50021 synthesize の実験、
 無ければ未確認と報告）、または (E) scene の animal-power 対応、
 または CI ワークフロー（.github/workflows で audit.cljs + test を回す）。
+
+## Iteration 11 — 2026-07-17
+
+**Build**:
+
+- `.github/workflows/ci.yml` — push / PR で nbb テスト（test/run.cljs）+
+  episode 横断 self-audit（tools/audit.cljs）を回す CI。既存の
+  kotoba-lang/design-quality の ci.yml を参照して形式を合わせた（setup-node +
+  nbb 第一経路）。
+- README に self-audit / full-produce E2E / next_topic の実行例と CI の説明を追記。
+- ローカル検証（CI と同一コマンド）: nbb テスト 89 green、self-audit ALL PASS
+  mean 97%、いずれも exit 0。
+
+**Learn（実際に発火した実害 1 件）**:
+
+- **`npx --yes nbb --classpath src:test test/run.cljs` が失敗**。npx が
+  スラッシュ入りスクリプトパス `test/run.cljs` を **パッケージ名
+  `github:test/run.cljs` と誤解**して install を試み、コケた（design-quality の
+  ci.yml は `-m ns.name` 形式だったのでこの罠を踏んでいなかった）。
+  対処: CI で `npm install -g nbb` してから `nbb` を直接呼ぶ形に変更。
+  ローカルの nbb（install 済み）は最初から直接呼んでいたので緑で、npx 経路
+  だけが踏む罠だった — 「ローカルで通る」と「CI の呼び出し形式で通る」は別、を
+  実地で確認（iter7 の「単体で緑 ≠ 端から端で緑」の CI 版）。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+CI ワークフロー追加済み。**GitHub Actions 上での実際の緑は push 後に確認が必要
+（このローカル環境では Actions を実行できない）— 現時点では unknown、ローカルで
+CI と同一の nbb コマンドが緑であることのみ確認済み**。無人運転の品質ゲートは
+「ローカル同一コマンド緑 + workflow 追加」まで到達、Actions 実緑は follow-up。
+
+**Next**: Actions の実緑を push 後に確認、または (E) scene の animal-power 対応
+（audit の scene-linked が nomi でも満点に）、または (I) VOICEVOX 実 IO 実験。
