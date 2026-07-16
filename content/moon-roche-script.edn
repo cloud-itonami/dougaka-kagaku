@@ -1,0 +1,20 @@
+;; 台本 — content/moon-roche.edn に対応。数値は全て {{claim-id}} placeholder。
+{:scenes
+ [{:location "夜空・近づいてくる月"
+   :action "空を覆うほど大きくなった月を見上げる二人"
+   :lines
+   [{:speaker "right" :text "月がどんどん近づいてきたら、最後は地球にぶつかるの？" :emotion "surprised"}
+    {:speaker "left" :text "いや、ぶつかる前に月のほうが壊れてしまうんだ" :emotion "normal"}
+    {:speaker "right" :text "壊れる！？ どうして？" :emotion "surprised"}]}
+  {:location "シミュレーション空間・潮汐力の可視化"
+   :action "近づく月の地球側と反対側で、引っぱりの矢印の差が広がる"
+   :lines
+   [{:speaker "left" :text "近いほど、月の地球側と反対側で引っぱりの差が大きくなる。これが潮汐力だ" :emotion "normal"}
+    {:speaker "left" :text "その差が、月を自分でまとめている重力を超えると、月はバラバラになる" :emotion "normal"}
+    {:speaker "right" :text "引き裂かれちゃうんだ……" :emotion "sad"}]}
+  {:location "シミュレーション空間・限界距離の計算"
+   :action "地球と月の密度から限界距離を求め、リング状の残骸が広がる"
+   :lines
+   [{:speaker "left" :text "計算すると、やわらかい月なら約 {{roche-fluid}}、固い岩でも約 {{roche-rigid}} が限界だ" :emotion "normal"}
+    {:speaker "right" :text "でも今の月って、もっとずっと遠いよね？" :emotion "normal"}
+    {:speaker "left" :text "今の月は {{current-distance}}。限界の {{safety-margin}} も遠い。だから当分は安全だよ" :emotion "happy"}]}]}

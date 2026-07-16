@@ -110,6 +110,29 @@
     (throw (ex-info "numeric-experiment: unknown :experiment"
                     {:experiment (:experiment domain)}))))
 
+(defmethod solve :roche-limit
+  ;; ロッシュ限界 = 潮汐力が衛星の自己重力を超えて衛星を引き裂く距離。
+  ;;   剛体: d = R_p (2 ρ_p/ρ_s)^(1/3)、流体: d = 2.44 R_p (ρ_p/ρ_s)^(1/3)。
+  ;; 密度は constants の質量・半径（球）から計算（ρ = M / (4/3 π R³)）— LLM が
+  ;; 覚えた密度値でなく出典付き定数から導く（AI 非算術の徹底）。
+  [{:keys [domain]} constants]
+  (let [mp (constant constants (:primary-mass domain) "kg")
+        rp-km (constant constants (:primary-radius domain) "km")
+        ms (constant constants (:satellite-mass domain) "kg")
+        rs-km (constant constants (:satellite-radius domain) "km")
+        density (fn [m r-km]
+                  (let [r (* r-km 1000.0)]
+                    (/ m (* (/ 4.0 3.0) Math/PI r r r))))
+        rho-p (density mp rp-km)
+        rho-s (density ms rs-km)
+        cube-root (fn [x] (Math/pow x (/ 1.0 3.0)))]
+    {:outputs {:roche-rigid-km {:quantity (* rp-km (cube-root (* 2.0 (/ rho-p rho-s))))
+                                :unit "km"}
+               :roche-fluid-km {:quantity (* 2.44 rp-km (cube-root (/ rho-p rho-s)))
+                                :unit "km"}
+               :primary-density {:quantity rho-p :unit "kg/m^3"}
+               :satellite-density {:quantity rho-s :unit "kg/m^3"}}}))
+
 (defmethod solve :reduced-order-aero
   ;; 空力抗力 F = ½ ρ Cd A v²（抗力方程式）。空気密度 ρ は constants の
   ;; air-density-sea-level（出典 ISA、ρ0=1.225 kg/m³）× density-ratio。
@@ -141,7 +164,7 @@
 (def rom-kinds
   "kagaku.rom がローカルに解ける kind（それ以外は :exec 委譲）。"
   #{:tidal-scaling :two-body-orbit :scaling-law :numeric-experiment
-    :reduced-order-aero})
+    :reduced-order-aero :roche-limit})
 
 (defn run-cases
   "episode の sim-cases のうち rom で解けるものを全て解き、

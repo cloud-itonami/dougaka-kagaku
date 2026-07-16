@@ -889,3 +889,39 @@ audit mean 99%。実 IO は音声のみ実測。
 
 **Next**: cadence 運用（daily_draft スクリプト）、各 series 2本目で深さ、
 または 実 IO の 2 モダリティ目（kami render harness、重い）。
+
+## Iteration 23 — 2026-07-17
+
+**Build**:
+
+- rom に **`:roche-limit` solver 実装**（ロッシュ限界＝潮汐力が衛星の自己重力を
+  超え引き裂く距離）。剛体 d=R(2ρp/ρs)^⅓ / 流体 d=2.44R(ρp/ρs)^⅓。**密度は
+  constants の質量・半径から計算**（ρ=M/(4/3πR³）— LLM が覚えた密度でなく
+  出典付き定数から導く、AI 非算術の徹底）。地球密度 5513 / 月密度 3342 kg/m³
+  （いずれも実測一致）。
+- 8本目 episode `content/moon-roche.edn`（moon-approach 2本目、「月はどこまで
+  近づけるのか」）。全 claim = sim（限界距離 剛体9485/流体18368km・密度）+
+  constant（現在距離）+ derived（余裕比 20.9倍）。**moon-approach scene（既存）が
+  付き全 stage 揃い**、full-produce で human-review SVG 自動出力、audit 100%。
+- tests 104→105（240 assertions）green。audit 全8episode ALL PASS mean 99%。
+
+**Learn（実際に発火した実害 1 件）**:
+
+- **rom-kinds に :roche-limit を足したが simcase の solver-kinds に足し忘れ**、
+  full-produce が :design-sim で :rejected（simcase/validate-cases が未知 solver
+  として弾いた）。claim-consistency 単体は通っていた（rom は解けた）ので気付き
+  にくかったが、**pipeline の design-sim stage が simcase 語彙で検証する**ため
+  そこで露見。solver 追加は 2 箇所（rom-kinds = 解ける集合、simcase/solver-kinds =
+  episode が宣言してよい集合）の同期が要る、を実地で確認。前者だけ足すと
+  「rom は解けるが episode 宣言が弾かれる」不整合になる。
+- 物理の正しさ: ロッシュ限界を :tidal-scaling（力比のみ）でなく専用 solver で
+  正しく計算。密度を定数から導いたので、値が実測（剛体 ~9500km / 流体 ~18400km）
+  と一致 — 「AI が覚えた値」でなく「定数からの計算」で正しさを担保。derived が
+  sim（限界距離）と constant（現在距離）を跨いで余裕比を出した（iter17/20 と同型）。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 8本、rom solver 6 kinds、全 stage 揃い 5本（tsuki/ant/pi/hyperloop/roche）。
+moon-approach series は 2本に。audit mean 99%。実 IO は音声のみ実測。
+
+**Next**: 各 series の深さ（2本目）、cadence 運用、または rom の :road-load /
+:rom-fc 追加で future-tech の別 topic。

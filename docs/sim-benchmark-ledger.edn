@@ -6,3 +6,4 @@
 #:kagaku.bench{:episode :ant-strength, :case :ant-scaling, :solver :scaling-law, :wall-ms 0, :runtime :nbb, :steps nil, :at "2026-07-16T17:01:36.631Z"}
 #:kagaku.bench{:episode :hyperloop-drag, :case :open-air, :solver :reduced-order-aero, :wall-ms 0, :runtime :nbb, :steps nil, :at "2026-07-16T20:24:45.006Z"}
 #:kagaku.bench{:episode :hyperloop-drag, :case :vacuum-tube, :solver :reduced-order-aero, :wall-ms 0, :runtime :nbb, :steps nil, :at "2026-07-16T20:24:45.007Z"}
+#:kagaku.bench{:episode :moon-roche, :case :roche, :solver :roche-limit, :wall-ms 0, :runtime :nbb, :steps nil, :at "2026-07-16T22:06:47.527Z"}

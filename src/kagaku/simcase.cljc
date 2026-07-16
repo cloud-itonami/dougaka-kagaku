@@ -28,6 +28,7 @@
     :road-load           ; kami-engine-vphysics — 走行抵抗・エネルギー
     :two-body-orbit      ; 二体軌道（reduced-order。月接近 what-if 用）
     :tidal-scaling       ; 潮汐力 1/d^3 スケーリング（reduced-order）
+    :roche-limit         ; ロッシュ限界（密度比から崩壊距離。reduced-order）
     :scaling-law         ; アロメトリー / 相似則（動物比較用）
     :numeric-experiment});; num ベースの決定論数値実験（数学・物理 3 分解説用）
 

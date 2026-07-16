@@ -1,0 +1,38 @@
+;; エピソード spec の実例 8 — 「月はどこまで近づけるのか（ロッシュ限界）」。
+;; moon-approach series 2 本目（tsuki-half-distance と対）。ロッシュ限界を
+;; rom :roche-limit で解く（密度は constants の質量・半径から計算、剛体/流体の
+;; 2 式）。全 claim は sim（限界距離・密度）+ constant（現在距離）+ derived（余裕比）。
+{:series :moon-approach
+ :question "月はどこまで地球に近づけるのか？ 近づきすぎると何が起きる？"
+ :duration-s 300
+ :claims
+ [{:id :roche-fluid
+   :text "月がやわらかい天体なら、約1万8千kmまで近づくと潮汐力で引き裂かれる"
+   :value {:quantity 18368.0 :unit "km"}
+   :source {:kind :sim :case :roche :output :roche-fluid-km}}
+  {:id :roche-rigid
+   :text "固い岩の塊でも、約9500kmが限界"
+   :value {:quantity 9485.0 :unit "km"}
+   :source {:kind :sim :case :roche :output :roche-rigid-km}}
+  {:id :current-distance
+   :text "いっぽう今の月は約38万4400kmの彼方"
+   :value {:quantity 384400.0 :unit "km"}
+   :source {:kind :constant :ref :earth-moon-distance-mean}}
+  {:id :safety-margin
+   :text "つまり今の月は、引き裂かれる限界の約20倍も遠くにいる"
+   :value {:quantity 20.9 :unit "ratio"}
+   :source {:kind :derived :op :ratio :from [:current-distance :roche-fluid]}}]
+ :sim-cases
+ [{:id :roche
+   :solver {:kind :roche-limit}
+   :domain {:primary-mass :earth-mass :primary-radius :earth-radius-mean
+            :satellite-mass :moon-mass :satellite-radius :moon-radius-mean
+            :note "密度は質量÷体積で計算。剛体 d=R(2ρp/ρs)^⅓、流体 d=2.44R(ρp/ρs)^⅓"}
+   :outputs {:roche-fluid-km {:unit "km"}
+             :roche-rigid-km {:unit "km"}}}]
+ :beats
+ ["導入: もし月がどんどん近づいてきたら、ぶつかる前に何が起きる？"
+  "潮汐力: 近いほど地球側と反対側で引っぱりの差が大きくなる（前回の逆3乗則）"
+  "ロッシュ限界: 引っぱりの差が月の自己重力を超えると、月は崩壊する"
+  "sim: 地球と月の密度から限界距離を計算（剛体と流体の2ケース）"
+  "まとめ: 限界は約1万〜2万km。今の月はその20倍遠く、当分は安全"]}

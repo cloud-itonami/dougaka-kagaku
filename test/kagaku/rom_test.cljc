@@ -88,6 +88,24 @@
       (is (= a b))
       (is (< 3.0 pi-est 3.3)))))
 
+(deftest roche-limit
+  (testing "地球-月のロッシュ限界（剛体 ~9500km / 流体 ~18400km、実測と一致）"
+    (let [c {:earth-mass {:quantity 5.9722e24 :unit "kg"}
+             :earth-radius-mean {:quantity 6371.0 :unit "km"}
+             :moon-mass {:quantity 7.342e22 :unit "kg"}
+             :moon-radius-mean {:quantity 1737.4 :unit "km"}}
+          {:keys [outputs]} (rom/solve {:solver {:kind :roche-limit}
+                                        :domain {:primary-mass :earth-mass
+                                                 :primary-radius :earth-radius-mean
+                                                 :satellite-mass :moon-mass
+                                                 :satellite-radius :moon-radius-mean}}
+                                       c)]
+      (is (< 9400.0 (get-in outputs [:roche-rigid-km :quantity]) 9600.0))
+      (is (< 18200.0 (get-in outputs [:roche-fluid-km :quantity]) 18500.0))
+      (testing "密度も実測近傍（地球 ~5510 / 月 ~3340 kg/m³）"
+        (is (< 5500.0 (get-in outputs [:primary-density :quantity]) 5520.0))
+        (is (< 3335.0 (get-in outputs [:satellite-density :quantity]) 3350.0))))))
+
 (deftest reduced-order-aero-drag
   (testing "抗力 F=½ρCdAv²。真空チューブ（density 1/1000）で抗力も 1/1000"
     (let [open (rom/solve {:solver {:kind :reduced-order-aero}
