@@ -112,3 +112,31 @@
   (let [bad (assoc-in episode [:sim-cases 0 :solver :kind] :magic)
         end (pipeline/run-plan {:episode bad :facts good-facts})]
     (is (= :rejected (:status end)))))
+
+(deftest provenance-gate-independent-of-render
+  (testing "provenance-gate は render facts が無くても green になれる（尺・ラウドネスを見ない）"
+    (let [no-render (dissoc good-facts :render)]
+      (is (= :ready-for-review (:decision (factcheck/provenance-gate no-render))))))
+  (testing "旧 gate（union）は render 欠如で reject（これが混在バグの正体だった）"
+    (let [no-render (dissoc good-facts :render)]
+      (is (= :rejected (:decision (factcheck/gate no-render)))))))
+
+(deftest render-gate-checks-measurements
+  (is (= :ready-for-review (:decision (factcheck/render-gate good-facts))))
+  (testing "尺超過は render-gate が弾く"
+    (is (= :rejected (:decision (factcheck/render-gate
+                                 (assoc-in good-facts [:render :duration-s] 30)))))))
+
+(deftest pipeline-halts-awaiting-exec-without-render
+  (testing "render facts 無しの full-produce は :render-video で :awaiting-exec 停止（捏造しない）"
+    (let [facts (dissoc good-facts :render)
+          end (pipeline/run-plan {:episode episode :script nil :facts facts})]
+      (is (= :awaiting-exec (:status end)))
+      (is (= :render-video (:stage end)))
+      (is (= :green (:gate end))))))
+
+(deftest pipeline-full-with-render-holds-at-human-review
+  (testing "render facts 付きなら render-gate を越えて human-review で hold"
+    (let [end (pipeline/run-plan {:episode episode :facts good-facts})]
+      (is (= :held (:status end)))
+      (is (= :green (:render-gate end))))))

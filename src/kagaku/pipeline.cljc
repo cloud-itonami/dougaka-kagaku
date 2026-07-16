@@ -59,10 +59,22 @@
         (assoc state :status :rejected :errors (into (vec ep-errors) sc-errors))))
 
     :factcheck
-    (let [{:keys [decision failed]} (factcheck/gate (:facts state))]
+    ;; render 前の HARD gate は provenance のみ（尺・ラウドネスは render 後）。
+    (let [{:keys [decision failed]} (factcheck/provenance-gate (:facts state))]
       (if (= :ready-for-review decision)
         (assoc state :stage (next-stage stage) :gate :green)
         (assoc state :status :rejected :gate :flag :failed failed)))
+
+    :render-video
+    ;; render 実行は :exec。measured render facts が facts に入っていれば
+    ;; render 測定 gate（尺・ラウドネス）を掛ける。無ければ offline halt
+    ;; （:exec の実測待ち — 捏造した測定値で通さない）。
+    (if (:render (:facts state))
+      (let [{:keys [decision failed]} (factcheck/render-gate (:facts state))]
+        (if (= :ready-for-review decision)
+          (assoc state :stage (next-stage stage) :render-gate :green)
+          (assoc state :status :rejected :render-gate :flag :failed failed)))
+      (assoc state :status :awaiting-exec :reason :render-measurements-needed))
 
     :human-review
     (let [{:keys [decision] :as verdict}

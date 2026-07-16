@@ -15,6 +15,8 @@
             [kagaku.scenario :as scenario]
             [kagaku.script :as script]
             [kagaku.voice :as voice]
+            [kagaku.scene :as scene]
+            [kagaku.pipeline :as pipeline]
             [kagaku.simcase :as simcase]
             ["fs" :as fs]))
 
@@ -143,4 +145,38 @@
            (str "/ 人間の出典確認待ち: " (str/join ", " (map name pending-citations)))
            "")
          "\n   (full gate は render 後の facts で kagaku.factcheck/gate)")
+
+;; 7) full-produce E2E — pipeline/run-plan で純データ経路を端から端まで畳む。
+;;    render 測定（尺・ラウドネス）は :exec の実測待ちなので :render facts を
+;;    捏造せず、:render-video で :awaiting-exec 停止するのが正しい終端。
+(def raw-script
+  (when (fs/existsSync script-path)
+    (reader/read-string (fs/readFileSync script-path "utf8"))))
+(when raw-script
+  (let [credit (voice/credit-string (voice/plan-script (script/expand raw-script (:claims episode))))
+        facts {:episode episode
+               :sim-results results
+               :constants constants
+               :citations citations
+               :metadata {:made-for-kids false
+                          :sim-disclosure true
+                          :voice :voicevox
+                          :description (str "全編シミュレーションによる科学解説。" credit)}}
+        end (pipeline/run-plan {:episode episode :script raw-script :facts facts})]
+    (println "\n== full-produce E2E (pipeline/run-plan):")
+    (println "   終端 stage:" (:stage end) "/ status:" (:status end)
+             (when (:reason end) (str "(" (name (:reason end)) ")")))
+    (println "   provenance gate:" (:gate end)
+             "| scene:" (if (:scene end) (str (get-in end [:scene :snapshot/name]) " (valid)") "none")
+             "| voice lines:" (count (:voice-plans end)))
+    (println "   credit:" (:voice-credits end))
+    (when (:pending-citations end) nil)
+    (cond
+      (= :awaiting-exec (:status end))
+      (println "   → provenance/scene/voice まで OK。render 測定は :exec 実測待ち"
+               "(尺・ラウドネス・人間レビューは実 render 後)。")
+      (= :rejected (:status end))
+      (do (println "   → REJECTED:" (pr-str (:failed end))) (js/process.exit 1))
+      :else
+      (println "   → status:" (:status end)))))
 (when-not all-ok? (js/process.exit 1))

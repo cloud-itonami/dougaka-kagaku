@@ -114,31 +114,63 @@
      :detail {:integrated-lufs integrated-lufs :true-peak-dbtp true-peak-dbtp}}))
 
 ;; --- gate ---------------------------------------------------------------
+;;
+;; factcheck は 2 段に分かれる（stage 順序の実測で判明した設計上の必然）:
+;;   provenance-checks — render 出力に依存しない。:factcheck stage（render 前）で
+;;     走り、悪い数値を render 計算に金をかける前に止める。
+;;   render-checks — render 後の測定（尺・ラウドネス）を要する。:render-video の
+;;     後で走る。render 前に走らせると必ず fail する（:render facts が無いため）。
+;; この分割前は checks が両者を混ぜており、実運用順（factcheck が render の前）で
+;; provenance が全 green でも loudness 欠如で必ず :rejected になる欠陥があった
+;; （full-produce E2E 統合で発火。ADR-2607165000 の factcheck stage 記述を実装で精緻化）。
 
-(defn checks [facts]
+(defn provenance-checks
+  "render 出力に依存しない決定論チェック（:factcheck stage 用）。"
+  [facts]
   [(check-episode facts)
    (check-sim-consistency facts)
    (check-constants facts)
    (check-derived facts)
    (check-citations facts)
    (check-sim-disclosure facts)
-   (check-metadata facts)
-   (check-duration facts)
+   (check-metadata facts)])
+
+(defn render-checks
+  "render 後の測定チェック（:render-video の後 / publish 前）。"
+  [facts]
+  [(check-duration facts)
    (check-loudness facts)])
 
-(defn gate
-  "決定論 gate。全 green → :ready-for-review（human-review 段へ）。
-   1 つでも fail → :rejected（修正して再生成。advisory 続行しない）。"
+(defn checks
+  "全チェック（provenance + render）。render facts が揃った段（publish 判定）で使う。"
   [facts]
-  (let [results (checks facts)
-        failed (vec (remove :ok? results))]
+  (into (provenance-checks facts) (render-checks facts)))
+
+(defn- decide [results]
+  (let [failed (vec (remove :ok? results))]
     {:decision (if (empty? failed) :ready-for-review :rejected)
-     :failed failed
-     :results results}))
+     :failed failed :results results}))
+
+(defn provenance-gate
+  "render 前の HARD gate。provenance 全 green → :ready-for-review、
+   1 つでも fail → :rejected（advisory 続行しない）。"
+  [facts]
+  (decide (provenance-checks facts)))
+
+(defn render-gate
+  "render 後の測定 gate（尺・ラウドネス）。"
+  [facts]
+  (decide (render-checks facts)))
+
+(defn gate
+  "provenance + render を合わせた決定論 gate（全 facts が揃った段で使う）。
+   後方互換: full facts を渡す既存呼び出しはこれまでどおり動く。"
+  [facts]
+  (decide (checks facts)))
 
 (defn publish-decision
-  "publish の最終判定。決定論 gate green **かつ** オーナーの明示承認が
-   あるときだけ :publish。承認が無ければ常に :held（auto-publish しない）。"
+  "publish の最終判定。決定論 gate（provenance + render）全 green **かつ**
+   オーナーの明示承認があるときだけ :publish。承認が無ければ常に :held。"
   [facts]
   (let [{:keys [decision failed]} (gate facts)
         {:keys [by at]} (:human-approved facts)]

@@ -239,3 +239,46 @@ unknown。scene planner は現状 moon-approach のみ担当（他 series は ni
 **Next**: (実 render 手前の純データ経路はほぼ揃った) 実 IO 配線の前段として
 (D) compose の topic 選定（yukkuri topics.cljc priorityScore 移植）、または
 scene planner の他 series 対応（animal-power の相似則 scene 等）。
+
+## Iteration 7 — 2026-07-16
+
+**Build**:
+
+- **full-produce E2E 統合**（推奨 F）。run_episode.cljs に pipeline/run-plan を
+  通す経路を追加し、episode から compose→sim→script→factcheck→voice→scene→
+  render-video まで純データで畳んで各 stage 成果物を 1 コマンド表示。
+- E2E 結果（両 episode で正しく動作）:
+  - tsuki（constants + sim、未検証引用なし）→ render-video まで流れ
+    `:awaiting-exec`（render 測定は :exec 実測待ち）。provenance green /
+    scene moon-approach valid / voice 9 lines / credit 生成。
+  - nomi-jump（引用未検証）→ :factcheck で `:rejected`（citations PENDING）。
+    人間の出典確認まで公開経路に乗らない設計が pipeline 全体でも発火。
+- tests 69 → 73（149 assertions）green。
+
+**Learn（E2E 統合で実際に発火した設計欠陥 1 件）**:
+
+- **factcheck が pre-render と post-render のチェックを混在させていた実バグを
+  発見・修正。** `:factcheck` stage は stage 順で render-video の *前*（悪い
+  数値に render 計算を使う前に止めるため）だが、`checks` に check-duration /
+  check-loudness（render 後の測定＝`:render` facts 依存）が混ざっていた。
+  実運用順では factcheck 時点で `:render` が無いので、**provenance が全 green
+  でも尺・ラウドネス欠如で必ず :rejected** になる欠陥だった。単体テストは
+  `:render` 込みの full facts を gate に渡していたので緑のまま隠れていた
+  （＝テストが実運用の stage 順序を模していなかった死角）。
+  修正: `provenance-gate`（render 前）/ `render-gate`（render 後）に分割、
+  pipeline は :factcheck で provenance-gate、:render-video で render-gate。
+  `gate`（union）は後方互換で温存。
+- **render facts が無いとき :render-video は捏造せず `:awaiting-exec` 停止**に
+  した。offline harness で loudness を 0 埋めして「通す」のは 捏造ゼロ 原則違反 —
+  「実測待ち」を正直な終端状態にした。
+- 学び: 「純データ経路が各 stage 単体で緑」でも「端から端で正しく繋がる」とは
+  限らない。E2E 統合は単体テストの死角（stage 順序・facts の時間的可用性）を
+  炙り出す。iteration 6 までの 6 部品が初めて 1 本に繋がって初めて出たバグ。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+パイプライン: compose→…→render-video まで純データで端から端まで到達確認。
+実 IO（sim 実行以外: VOICEVOX / kami-engine render / YouTube / D1）は未配線。
+render 後の測定・人間レビュー・publish は実 render 待ちで unknown。
+
+**Next**: 実 IO 配線の最初の一歩（VOICEVOX /v1/audio/speech の実呼び出し 1 行、
+または kami-engine headless render の 1 シーン）、または (D) compose topic 選定。
