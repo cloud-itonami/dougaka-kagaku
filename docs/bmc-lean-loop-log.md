@@ -971,3 +971,43 @@ fold/pi/double-pendulum の 3）。audit mean 99%。実 IO は音声のみ実測
 
 **Next**: cadence 運用（daily_report）、各 series の深さ、または実 IO の
 2 モダリティ目（kami render harness）。
+
+## Iteration 25 — 2026-07-17
+
+**Build**:
+
+- `tools/synth_episode.cljs` — episode の**台本全行を実 VOICEVOX で合成**
+  （iter13 の try_voice を 1 行→全行に拡張）。展開済み台本（script/expand、
+  数値は claim から転記済み）の各 line を plan-script → localhost:50021 で
+  per-line wav 化し scratchpad の episode 別ディレクトリに書き出す。順次合成で
+  エンジンに過負荷をかけない。未起動なら「未確認」で exit 0（正直）。
+
+**Measure（実 IO 音声の実用化を実測）**:
+
+- **pi-monte-carlo の台本 9 行すべてを実合成成功**: 9/9 行、計 2,308,492 bytes
+  の wav。話者は四国めたん（style 2）/ ずんだもん（style 3）が台本の
+  speaker(left/right)どおり交互。各 line は本物の WAVE audio（`file` 判定:
+  RIFF WAVE PCM 16bit mono 24000Hz）。line 8 に転記済みの「0.0102」も含む
+  = **合成音声も LLM 非算術の台本そのまま**（数値は sim 由来の転記）。
+- iter13 は plan→実wav を 1 行で実証、iter25 は**episode 単位で全行**に拡張。
+  実 IO の音声モダリティが「1 動画分の音声」まで到達。
+- tests 106 green（ツール追加のみ、lib 不変）。
+
+**Learn**:
+
+- iter5 の kagaku.voice（pure planner）→ iter13（1行実合成）→ iter25（全行実合成）
+  と、純データ plan が実 IO の実用スケールまで**同じ contract のまま**育った。
+  plan-script が返す per-line plan をそのまま fetch に流すだけで済んだ
+  （台本→音声の配線に新しい設計判断が不要）。iter5 の「plan の contract が
+  正しければ実 IO は薄い配線」が episode 全体でも成立。
+- human-review の材料が、数値（claim 整合）+ 台本（展開テキスト）+ 絵
+  （scene SVG、iter19）+ **音（全行 wav、iter25）** の 4 点で揃った。実運用の
+  human-review が「見て・聞いて」事実確認できる状態に近づいた（残りは
+  authoritative 動画 render = kami-engine WebGPU、iter15 で重いと確認済み）。
+
+**Measure（続き）**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 9本。実 IO: 音声=**episode 単位で全行実合成まで実測**（pi で 9/9 行、
+2.3MB wav）。画の authoritative render は未実測（SVG thumbnail のみ）。
+
+**Next**: cadence 運用（daily_report）、他 episode の音声合成、または
+実 IO の画（kami render harness、重い）。

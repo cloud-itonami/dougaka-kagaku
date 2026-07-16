@@ -75,6 +75,10 @@ nbb --classpath src tools/try_voice.cljs "セリフ" [--speaker N]
 # scene の 2D サムネイル（human-review 用。非-authoritative。
 # authoritative render は WebGPU/kami-engine で本ツールは配置プレビューのみ）
 nbb --classpath src tools/try_render.cljs content/tsuki-half-distance.edn [out.svg]
+
+# 台本全行を VOICEVOX で実合成（per-line wav を scratchpad に書き出し。
+# エンジン localhost:50021 が無ければ「未確認」と報告して exit 0）
+nbb --classpath src tools/synth_episode.cljs content/pi-monte-carlo.edn
 ```
 
 CI（`.github/workflows/ci.yml`）は push / PR で上記の nbb テスト + self-audit を

@@ -1,0 +1,88 @@
+;; episode の台本全行を VOICEVOX で実合成（実 IO の実用化）:
+;;   nbb --classpath src tools/synth_episode.cljs content/pi-monte-carlo.edn
+;; 展開済み台本の各 line を kagaku.voice/plan-script → 実 VOICEVOX（localhost:50021）
+;; で per-line wav 化し、scratchpad の episode 別ディレクトリに書き出す。
+;; iter13 の try_voice（1 行）を台本全行に拡張。数値は claim から転記済み
+;; （script/expand）なので、合成される音声も LLM 非算術の台本そのまま。
+;; エンジン未起動なら「未確認」と正直に報告して exit 0（環境依存で実害でない）。
+(ns synth-episode
+  (:require [cljs.reader :as reader]
+            [clojure.string :as str]
+            [kagaku.script :as script]
+            [kagaku.voice :as voice]
+            ["fs" :as fs]))
+
+(def args (vec *command-line-args*))
+(def episode-path (or (first args) "content/pi-monte-carlo.edn"))
+(def script-path (.replace episode-path ".edn" "-script.edn"))
+(def engine-url "http://127.0.0.1:50021")
+
+(when-not (fs/existsSync script-path)
+  (println "台本が無い:" script-path) (js/process.exit 0))
+
+(def episode (reader/read-string (fs/readFileSync episode-path "utf8")))
+(def raw-script (reader/read-string (fs/readFileSync script-path "utf8")))
+(def expanded (script/expand raw-script (:claims episode)))
+(def plans (voice/plan-script expanded {:engine-url engine-url}))
+
+(def out-dir
+  (str "/private/tmp/claude-501/-Users-junkawasaki-github-com-junkawasaki/"
+       "80eb0bfa-400a-400a-8326-1ad3e8d37674/scratchpad/kagaku-audio-"
+       (-> episode-path (.split "/") last (.replace ".edn" ""))))
+(when-not (fs/existsSync out-dir) (fs/mkdirSync out-dir #js {:recursive true}))
+
+(println "== VOICEVOX 台本合成:" episode-path)
+(println "   lines:" (count plans) "/ out:" out-dir "\n")
+
+(defn synth-line [idx {:keys [ok speaker text audio-query-url synthesis-url] :as _p}]
+  (if-not ok
+    (js/Promise.resolve {:idx idx :ok false :reason :empty})
+    (-> (js/fetch (str audio-query-url "?speaker=" speaker
+                       "&text=" (js/encodeURIComponent text))
+                  #js {:method "POST"})
+        (.then (fn [r] (if (.-ok r) (.json r)
+                           (throw (js/Error. (str "audio_query " (.-status r)))))))
+        (.then (fn [q]
+                 (js/fetch (str synthesis-url "?speaker=" speaker)
+                           #js {:method "POST"
+                                :headers #js {"Content-Type" "application/json"}
+                                :body (js/JSON.stringify q)})))
+        (.then (fn [r] (if (.-ok r) (.arrayBuffer r)
+                           (throw (js/Error. (str "synthesis " (.-status r)))))))
+        (.then (fn [buf]
+                 (let [n (.-length (js/Uint8Array. buf))
+                       f (str out-dir "/line-"
+                              (.padStart (str idx) 3 "0") ".wav")]
+                   (fs/writeFileSync f (js/Buffer.from buf))
+                   {:idx idx :ok true :bytes n :speaker speaker
+                    :text (subs text 0 (min 24 (count text)))}))))))
+
+;; エンジン疎通を先に確認（未起動なら未確認で正直に終了）
+(-> (js/fetch (str engine-url "/version"))
+    (.then (fn [r] (when-not (.-ok r) (throw (js/Error. "engine not ok")))))
+    (.then (fn [_]
+             ;; 順次合成（エンジンへ過負荷をかけない）
+             (reduce (fn [p [idx pl]]
+                       (.then p (fn [acc]
+                                  (.then (synth-line idx pl)
+                                         (fn [r]
+                                           (println (str "  line " idx ": "
+                                                         (if (:ok r)
+                                                           (str (:bytes r) " bytes  "
+                                                                (:speaker r) " | " (:text r))
+                                                           (str "skip(" (name (:reason r)) ")"))))
+                                           (conj acc r))))))
+                     (js/Promise.resolve [])
+                     (map-indexed vector plans))))
+    (.then (fn [results]
+             (let [ok (filter :ok results)
+                   total (reduce + (map :bytes ok))]
+               (println (str "\n== 実測: " (count ok) "/" (count plans)
+                             " 行を実合成、計 " total " bytes の wav"))
+               (println "   → 台本の音声が揃った（数値は claim 由来の転記そのまま）")
+               (js/process.exit 0))))
+    (.catch (fn [e]
+              (println (str "\n== 未確認: VOICEVOX engine に到達できない（"
+                            (.-message e) "）"))
+              (println "   → 全行合成は今回未実測（エンジン未起動 or 接続不可）。")
+              (js/process.exit 0))))
