@@ -1,0 +1,35 @@
+;; エピソード spec の実例 3 — 「円周率を乱数で求める」（三分で理解する数学・物理）。
+;; **全 claim が sim 由来**の初の episode — LLM 非算術の理想形。
+;; sample 数・推定値・真πとの誤差、すべて :numeric-experiment solver の
+;; 決定論出力（seed 42、再現可能）に束縛され、台本に書ける数字は 1 つも
+;; LLM が作っていない。円/正方形の面積比 π/4 をモンテカルロで推定する。
+{:series :three-min-math
+ :question "サイコロを振るように点を打つだけで、円周率が求められる？"
+ :duration-s 180
+ :claims
+ [{:id :sample-count
+   :text "正方形の中に10万個の点をランダムに打つ"
+   :value {:quantity 100000.0 :unit "count"}
+   :source {:kind :sim :case :pi-mc :output :sample-count}}
+  {:id :pi-estimate
+   :text "円の中に入った点の割合から円周率はおよそ3.15と出る"
+   :value {:quantity 3.15176 :unit "1"}
+   :source {:kind :sim :case :pi-mc :output :pi-estimate}}
+  {:id :abs-error
+   :text "本当の円周率との差はおよそ0.01"
+   :value {:quantity 0.0102 :unit "1"}
+   :source {:kind :sim :case :pi-mc :output :abs-error}}]
+ :sim-cases
+ [{:id :pi-mc
+   :solver {:kind :numeric-experiment}
+   :domain {:experiment :pi-monte-carlo :seed 42 :samples 100000}
+   :budget {:steps 100000}
+   :outputs {:sample-count {:unit "count"}
+             :pi-estimate {:unit "1"}
+             :abs-error {:unit "1"}}}]
+ :beats
+ ["導入: 円周率を『測らずに』求められる、という不思議な問いかけ"
+  "仕掛け: 一辺1の正方形と、その中の四分円。面積比は π/4"
+  "sim: 点をランダムに打ち、円の内側に落ちた割合を数える（可視化）"
+  "結果: 割合を4倍すると円周率が現れる。10万点でおよそ3.15"
+  "まとめ: 点を増やすほど真の値に近づく（大数の法則）。誤差はおよそ0.01"]}

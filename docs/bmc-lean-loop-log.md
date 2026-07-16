@@ -321,3 +321,44 @@ kami-engine 実 render / YouTube upload / D1）。「次に作る topic」は機
 **Next**: 実 IO 配線の最初の一歩（VOICEVOX /v1/audio/speech を実際に叩いて
 tsuki の 1 行を wav 化、または kami-engine headless で earth-moon を 1 枚 render）、
 または (E) scene の animal-power 対応 / (G) 3本目 episode。
+
+## Iteration 9 — 2026-07-16
+
+**Build**:
+
+- 3本目 episode `content/pi-monte-carlo.edn` +台本（:three-min-math、
+  「円周率を乱数で求める」）。**全 claim が sim 由来の初の episode** —
+  sample数・推定値・真πとの誤差、すべて :numeric-experiment solver の
+  決定論出力（seed 42 再現可能）に束縛。台本の数字は 1 つも LLM が作っていない
+  ＝LLM 非算術の理想形。
+- rom :pi-monte-carlo に出力追加: :sample-count（エコー）、:abs-error
+  （真 π = Math/PI との絶対誤差、数学定数なので solver が決定論計算）。
+- 単位体系を拡張: "1"（純粋無次元数、バレ数表示）/ "count"（個数）を
+  units テーブルと script の unit-ja に追加。
+- E2E: claim-consistency 3件 OK、full-produce が render-video まで流れ
+  :awaiting-exec（citation 無しなので tsuki と同じく完走）。tests 82→82
+  （166→168 assertions、pi episode で 2 assertion 増）green。
+- docs/produced.edn に :pi-monte-carlo 追記。
+
+**Learn（実台本で発火した実害 2 件）**:
+
+- **digit 検査が「3.14」を捕捉**（iteration 2 で価値を記録した安全網が3度目の
+  発火）。台本の相槌「本当だ、3.14に近い！」の生数字を検出 → 「あの円周率に
+  そっくりだ！」に修正。LLM でなく自分が書いた台本でも生数字は出る — 検査が
+  効いている証拠。
+- **単位 "ratio"→"倍" の誤適用**を E2E 表示で発見。円周率が「3.15176倍」、
+  個数が「100000倍」と展開されていた（倍率でない純粋数に「倍」が付く）。
+  unit "ratio" を「倍率」に限定し、純粋無次元数 "1"・個数 "count" を分離
+  （バレ数表示）→「およそ 3.15176」「100000 個」に修正。
+  学び: 転記の機械化は数値の正しさを守るが、**単位の意味づけの正しさ**は
+  別問題。数値の種類（倍率/純粋数/個数/物理量）に応じた表示語彙が要る。
+  これは iteration 2 の「語としての正しさは守らない」学びの単位版。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 3本（うち pi は全 claim sim 由来）。bench 台帳に numeric-experiment の
+wall-ms 39（10万サンプル、初めて意味のある計算時間 — ただし rom の軽演算なので
+sim スタック性能の本格シグナルにはまだ遠い）。実 IO 未配線は変わらず。
+
+**Next**: (E) scene の animal-power 対応、または実 IO 配線の一歩
+（VOICEVOX 実呼び出し / kami-engine 実 render）、または (H) kagaku.audit
+（episode 横断の self-audit）。

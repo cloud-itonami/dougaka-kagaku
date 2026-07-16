@@ -64,7 +64,10 @@
 (deftest fmt-value-cases
   (is (= "8倍" (script/fmt-value {:quantity 8.0 :unit "ratio"})))
   (is (= "9.66日" (script/fmt-value {:quantity 9.66 :unit "day"})))
-  (is (= "384400km" (script/fmt-value {:quantity 384400.0 :unit "km"}))))
+  (is (= "384400km" (script/fmt-value {:quantity 384400.0 :unit "km"})))
+  (testing "純粋無次元数(\"1\")と個数(\"count\")は接尾辞なし＝バレ数（円周率に「倍」を付けない）"
+    (is (= "3.15176" (script/fmt-value {:quantity 3.15176 :unit "1"})))
+    (is (= "100000" (script/fmt-value {:quantity 100000.0 :unit "count"})))))
 
 (deftest request-spec-lists-claims
   (let [{:keys [system user]} (script/request-spec

@@ -1,0 +1,20 @@
+;; 台本 — content/pi-monte-carlo.edn に対応。数値は全て {{claim-id}} placeholder。
+{:scenes
+ [{:location "白い部屋・正方形の枠"
+   :action "一辺1の正方形と、その中に四分円が描かれる"
+   :lines
+   [{:speaker "right" :text "円周率って、円を測って求めるんだよね？" :emotion "normal"}
+    {:speaker "left" :text "実は、測らずに求める方法があるんだ。サイコロを振るみたいにね" :emotion "happy"}
+    {:speaker "right" :text "サイコロで円周率！？" :emotion "surprised"}]}
+  {:location "シミュレーション空間・点が降る"
+   :action "正方形の中にランダムな点が次々に打たれ、円の内外で色分けされる"
+   :lines
+   [{:speaker "left" :text "この正方形の中に、点をでたらめに打っていく。ぜんぶで {{sample-count}} 個" :emotion "normal"}
+    {:speaker "right" :text "円の中に入るのもあれば、外に出るのもあるね" :emotion "normal"}
+    {:speaker "left" :text "円の面積は正方形の四分の円ぶん。だから中に落ちる割合が、円周率の手がかりになる" :emotion "normal"}]}
+  {:location "シミュレーション空間・カウント表示"
+   :action "内側の点の割合を4倍する計算がアニメーションで示される"
+   :lines
+   [{:speaker "left" :text "内側に入った割合を四倍すると……ほら、円周率が現れる。今回はおよそ {{pi-estimate}}" :emotion "happy"}
+    {:speaker "right" :text "本当だ、あの円周率にそっくりだ！" :emotion "surprised"}
+    {:speaker "left" :text "本物との差はたった {{abs-error}}。点を増やすほど、もっと近づく。これが大数の法則だよ" :emotion "normal"}]}]}

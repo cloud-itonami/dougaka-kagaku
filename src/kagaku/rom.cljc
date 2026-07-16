@@ -95,9 +95,14 @@
                          x (/ s1 m) y (/ s2 m)]
                      (recur (inc i) s2
                             (if (<= (+ (* x x) (* y y)) 1.0)
-                              (inc hits) hits)))))]
-      {:outputs {:pi-estimate {:quantity (* 4.0 (/ hits (double samples)))
-                               :unit "ratio"}}})
+                              (inc hits) hits)))))
+          estimate (* 4.0 (/ hits (double samples)))]
+      {:outputs {;; 円周率は倍率でなく純粋な無次元数 → unit "1"（バレ数表示）。
+                 :pi-estimate {:quantity estimate :unit "1"}
+                 ;; sample 数のエコー（台本が「10万個」に言及するときの束縛先）。
+                 :sample-count {:quantity (double samples) :unit "count"}
+                 ;; 真の π（数学定数、solver が決定論計算してよい）との絶対誤差。
+                 :abs-error {:quantity (abs (- estimate Math/PI)) :unit "1"}}})
 
     (throw (ex-info "numeric-experiment: unknown :experiment"
                     {:experiment (:experiment domain)}))))
