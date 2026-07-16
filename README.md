@@ -79,6 +79,10 @@ nbb --classpath src tools/try_render.cljs content/tsuki-half-distance.edn [out.s
 # 台本全行を VOICEVOX で実合成（per-line wav を scratchpad に書き出し。
 # エンジン localhost:50021 が無ければ「未確認」と報告して exit 0）
 nbb --classpath src tools/synth_episode.cljs content/pi-monte-carlo.edn
+
+# チャンネル現況レポート（episode 数・series 分布・audit・sim ベンチ・次 topic・
+# 実 IO 到達状況を 1 コマンドで。既存部品の集約、新規 episode は作らない）
+nbb --classpath src tools/daily_report.cljs
 ```
 
 CI（`.github/workflows/ci.yml`）は push / PR で上記の nbb テスト + self-audit を

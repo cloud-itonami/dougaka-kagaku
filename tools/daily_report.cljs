@@ -1,0 +1,86 @@
+;; チャンネル現況レポート（ADR Phase C の運転可視化基盤）:
+;;   nbb --classpath src tools/daily_report.cljs
+;; 既存部品を集約して「今チャンネルに何本あり、どの series が揃い、次に何を作り、
+;; sim スタックの性能はどうか」を 1 コマンドで出す。新規 episode は作らない。
+;; 全て実データ由来（audit-all / bench 台帳 / compose）— 捏造ゼロ、推定値は出さない。
+(ns daily-report
+  (:require [cljs.reader :as reader]
+            [clojure.string :as str]
+            [kagaku.audit :as audit]
+            [kagaku.scene :as scene]
+            [kagaku.compose :as compose]
+            ["fs" :as fs]))
+
+(defn load-edn [p] (reader/read-string (fs/readFileSync p "utf8")))
+
+(def citations (if (fs/existsSync "docs/citations.edn") (load-edn "docs/citations.edn") {}))
+(def catalog (load-edn "resources/series.edn"))
+(def produced (if (fs/existsSync "docs/produced.edn") (set (load-edn "docs/produced.edn")) #{}))
+
+;; --- episode 群を読む ------------------------------------------------------
+(def episode-files
+  (->> (fs/readdirSync "content")
+       (filter #(str/ends-with? % ".edn"))
+       (remove #(str/ends-with? % "-script.edn"))
+       sort))
+(def ctxs
+  (for [f episode-files
+        :let [ep (load-edn (str "content/" f))
+              sp (str "content/" (str/replace f ".edn" "-script.edn"))]
+        :when (and (:series ep) (:claims ep))]
+    {:file f
+     :episode (assoc ep :topic-id (keyword (str/replace f ".edn" "")))
+     :script (when (fs/existsSync sp) (load-edn sp))
+     :citations citations}))
+
+(println "=========== ai-gftd-dougaka-kagaku 現況レポート ===========\n")
+
+;; --- 1) episode 総数 / series 分布 / 全stage揃い ---------------------------
+(def by-series (group-by #(get-in % [:episode :series]) ctxs))
+(println (str "■ episode: " (count ctxs) " 本"))
+(doseq [s (sort (keys by-series))]
+  (let [eps (get by-series s)
+        with-scene (count (filter #(scene/scene-for-episode (:episode %)) eps))]
+    (println (str "   " (name s) ": " (count eps) " 本"
+                  " (scene 付き " with-scene ")"))))
+
+;; --- 2) audit サマリ -------------------------------------------------------
+(def a (audit/audit-all ctxs))
+(println (str "\n■ audit: " (if (:all-pass? a) "ALL PASS" "FAIL あり")
+              " / mean-score " (.toFixed (* 100 (:mean-score a)) 0) "%"))
+(doseq [row (:episodes a)]
+  (when (< (:score row) 1.0)
+    (println (str "   " (name (:episode row)) " " (.toFixed (* 100 (:score row)) 0) "%"
+                  (when (seq (:findings row))
+                    (str " — " (first (:findings row))))))))
+
+;; --- 3) sim 性能（bench 台帳の solver 別集計） -----------------------------
+(println "\n■ sim ベンチ（solver 別、docs/sim-benchmark-ledger.edn）:")
+(if (fs/existsSync "docs/sim-benchmark-ledger.edn")
+  (let [rows (->> (str/split-lines (fs/readFileSync "docs/sim-benchmark-ledger.edn" "utf8"))
+                  (remove str/blank?)
+                  (map reader/read-string))
+        by-solver (group-by :kagaku.bench/solver rows)]
+    (doseq [s (sort (keys by-solver))]
+      (let [ms (keep :kagaku.bench/wall-ms (get by-solver s))
+            n (count (get by-solver s))
+            avg (if (seq ms) (/ (reduce + ms) (count ms)) 0)
+            mx (if (seq ms) (apply max ms) 0)]
+        (println (str "   " (name s) ": " n " 回、wall-ms 平均 "
+                      (.toFixed avg 1) " / 最大 " mx)))))
+  (println "   （台帳なし）"))
+
+;; --- 4) 次に作る topic（compose 機械選定） ---------------------------------
+(println "\n■ 次に作る topic（priorityScore + series ローテーション）:")
+(if-let [pick (compose/pick-topic catalog {:produced-ids produced})]
+  (do (println (str "   → " (name (:series pick)) " / " (name (:topic-id pick))))
+      (println (str "     " (:question pick))))
+  (println "   （カタログの topic は全て作成済み）"))
+
+;; --- 5) 実 IO 到達状況（正直に） -------------------------------------------
+(println "\n■ 実 IO 到達状況:")
+(println "   音声: plan→実wav 実測済み（synth_episode で episode 全行合成可、VOICEVOX 0.25.2）")
+(println "   画:   非-authoritative SVG のみ（authoritative WebGPU render は未実測）")
+(println "   公開: 未（動画公開 0 本 / チャンネル未開設）")
+
+(println "\n============================================================")

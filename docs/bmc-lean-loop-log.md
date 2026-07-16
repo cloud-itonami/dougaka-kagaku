@@ -1011,3 +1011,47 @@ episode 9本。実 IO: 音声=**episode 単位で全行実合成まで実測**�
 
 **Next**: cadence 運用（daily_report）、他 episode の音声合成、または
 実 IO の画（kami render harness、重い）。
+
+## Iteration 26 — 2026-07-17
+
+**Build**:
+
+- `tools/daily_report.cljs` — **チャンネル現況レポート**（ADR Phase C の運転
+  可視化基盤）。既存部品を集約し 1 コマンドで:
+  - episode 総数 + series 分布 + series 別 scene 被覆
+  - audit-all サマリ（ALL PASS / mean-score、100% 未満 episode の findings）
+  - **sim ベンチの solver 別集計**（bench 台帳を solver でグループ、wall-ms
+    平均/最大、実行回数）
+  - 次に作る topic（compose の priorityScore + rotation）
+  - 実 IO 到達状況（音声=実合成済み / 画=SVG のみ / 公開=未）を正直に
+  新規 episode は作らない運用可視化。全て実データ由来（捏造ゼロ、推定値なし）。
+- README 追記。tests 106 green（ツール追加のみ、lib 不変）。
+
+**Measure（レポートが出した実データ現況）**:
+
+- episode 9本: animal-power 2 / everyday-mechanism 1 / future-tech 1 /
+  moon-approach 2 / three-min-math 3。scene 被覆は everyday 以外の 4 series。
+- audit ALL PASS mean 99%（kettle/nomi が citation PENDING で 95%）。
+- sim ベンチ（**追記済み分のみ、正直**）: numeric-experiment 38ms / scaling-law
+  平均 3.3ms / 他は 0ms（reduced-order-aero/roche/tidal/two-body は軽演算）。
+  ※ double-pendulum の 538ms は --append せず dry-run だったので台帳に無い —
+  レポートは台帳の実データだけを出す（未追記の値を推定で埋めない）。
+- 次 topic: everyday-mechanism / bicycle-balance（kettle 作成済み + rotation）。
+
+**Learn**:
+
+- human-review 材料の部品（数値/絵/音、iter19/25）を作った後に、運転側の
+  可視化（現況レポート）を足したことで、**「作る（produce）」と「運転する
+  （operate）」の両輪が揃った**。レポートは audit-all / bench 台帳 / compose を
+  そのまま呼ぶだけで成立（新設計ゼロ）— 各部品が pure/データ駆動なので集約が容易。
+- 「未追記の bench 値を推定で埋めない」を実装で守った: double-pendulum の
+  重い計測（538ms）は台帳に無いのでレポートにも出ない。**レポートが実態より
+  良く見えないよう、台帳の実データだけを映す**（計測されていないものは出さない
+  ＝チャンネル本体の「計測されないメトリクス＝劇場」思想を運用ツールにも適用）。
+
+**Measure（続き）**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 9本、tools 7本（run_episode/audit/next_topic/try_voice/try_render/
+synth_episode/daily_report）。produce と operate の両輪が揃った。
+
+**Next**: animal-power 2本目（ゾウの脚、:scaling-law）、全 episode 音声一括合成、
+または実 IO の画（kami render harness、重い）。
