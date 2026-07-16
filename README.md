@@ -66,6 +66,10 @@ nbb --classpath src tools/run_episode.cljs content/tsuki-half-distance.edn
 
 # 次に作る topic を選定（priorityScore + series ローテーション）
 nbb --classpath src tools/next_topic.cljs
+
+# VOICEVOX 実 IO 実験（voice plan の contract が実エンジンで通るか実測。
+# エンジン localhost:50021 が無ければ「未確認」と報告して exit 0）
+nbb --classpath src tools/try_voice.cljs "セリフ" [--speaker N]
 ```
 
 CI（`.github/workflows/ci.yml`）は push / PR で上記の nbb テスト + self-audit を

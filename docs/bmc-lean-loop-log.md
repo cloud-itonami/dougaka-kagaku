@@ -488,3 +488,46 @@ mean-score 97% 維持。実 IO 未配線は変わらず。
 
 **Next**: (I) VOICEVOX 実 IO 実験（localhost:50021、無ければ未確認と報告）、
 または scene の他 series 対応、または 4本目 episode（ant-strength）。
+
+## Iteration 13 — 2026-07-17
+
+**Build**:
+
+- `tools/try_voice.cljs` — VOICEVOX 実 IO 実験ツール（実 IO 配線の最初の一歩）。
+  kagaku.voice/line-plan が返す audio-query-url/synthesis-url を実際に叩き、
+  1 行を wav 化して bytes 長・RIFF header を報告。エンジン未起動なら「未確認」で
+  exit 0（環境依存で実害でない設計）。
+- README に try_voice の実行例を追記。tests 92 green（ツール追加のみ、lib 不変）。
+
+**Measure（実 IO を初めて実測 — 全反復で最大の空白だった箇所）**:
+
+- **この環境の VOICEVOX engine は稼働していた**（localhost:50021、version 0.25.2、
+  ADR-2607131645 の常駐と一致）。
+- **kagaku.voice の plan contract が実エンジンで通った**: 四国めたん
+  （style_id=2）で「円周率はおよそ3.15。点を増やすほど近づきます。」を合成 →
+  **214572 bytes の本物の WAVE audio**（`file` 判定: RIFF little-endian, WAVE,
+  Microsoft PCM, 16bit mono 24000Hz）。audio_query → synthesis の 2 段 POST が
+  plan の記述どおり成立。
+- 出力 wav は scratchpad に書き repo を汚さない。
+
+**Learn**:
+
+- iteration 5 で kagaku.voice を「pure planner、実 IO は :exec」と設計したが、
+  その plan（audio-query-url/synthesis-url/speaker/query-overrides）が
+  **実エンジンで実際に通ることを初めて実測**できた。純データ設計は「実 IO を
+  後回しにする言い訳」ではなく「plan の contract が正しければ実 IO は薄い配線で
+  済む」ことの実証になった（今回の配線は fetch 2 回だけ）。
+- yukkuri voicevox.cljc から移植した style_id カタログ・URL 組み立てが、
+  移植先でも実エンジンに対して正しかった（yukkuri の運用実績が効いた）。
+- これで実 IO の 1 モダリティ（音声）が「plan → 実バイト」まで通った。残る
+  未実測の実 IO: kami-engine 実 render（画）/ YouTube upload / D1 永続化。
+  ただし本ツールは実験用で、pipeline の :synthesize-voice stage を実 IO 化した
+  わけではない（stage は依然 plan のみ返す純データ）— 実運用の :exec 配線は
+  別スコープ。
+
+**Measure（続き）**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+実 IO: 音声のみ plan→実wav を実測（他モダリティは unknown）。
+
+**Next**: (L) scene の three-min-math 対応、(K) 4本目 episode ant-strength、
+または kami-engine 実 render の実験（scene snapshot → 実画像、engine の
+headless render 経路を調査）。
