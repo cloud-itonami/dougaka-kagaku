@@ -701,3 +701,40 @@ mean 98%。実 IO は音声のみ実測。
 
 **Next**: (O) full-produce E2E への SVG 出力統合、(Q) audit preview-renderable
 axis、または everyday-mechanism/future-tech の scene 対応 or 6本目 episode。
+
+## Iteration 18 — 2026-07-17
+
+**Build**:
+
+- audit に **preview-renderable axis** 追加。scene を持つ episode で
+  `kagaku.preview/scene->circles` と `svg` が例外なく通り、circles が空でなく
+  SVG が `<svg` で始まるかを検査。scene が「valid だが描けない」退行
+  （iter16 の ortho 属性漏れのような、snapshot は valid でも preview 側で
+  落ちる/空になるクラス）を先回りで防ぐ。scene 未対応 series は skip 満点。
+- audit を kagaku.preview の消費者にした（iter15 で作った preview を audit が
+  初めて機械的に使う）。weight 再配分（scene-linked 0.10→0.08、
+  preview-renderable 0.07 新設、citations 0.10→0.05）。
+- tests 99→100（221 assertions）green。audit 全5episode ALL PASS、
+  **mean-score 98%→99%**（citation weight 減で nomi の減点が小さくなった）。
+
+**Learn**:
+
+- iter16 で手動発見した「scene は valid だが preview 側で ortho 属性が
+  未知で落ちる」退行クラスを、**axis として機械化**した。これで scene と
+  preview の両方が緑でないと episode が pass? しない（preview-renderable は
+  citations と違い blocker）。「学びを記録→次で発火→機械チェック化」の 3 段
+  （iter2/9/16 で観測）を、今回は自分で作った 2 つのモジュール（scene/preview）
+  の**結合点**の退行に適用 — 単一モジュール内でなくモジュール間の contract 退行も
+  audit で守れる。
+- pass? の設計（citations だけ非-blocker、他は blocker）が効いている:
+  preview-renderable を blocker にしたのは「scene があるのに絵にできない」のは
+  公開前に直すべき欠陥だから。citation PENDING（人間確認待ち＝正常）とは
+  区別が明確。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+audit axes 8個（spec/script/sim-unit/derived/scene-linked/preview-renderable/
+citations/coverage）。mean 99%。scene 対応 3/5 series、全 stage 揃い episode
+tsuki/ant/pi。実 IO は音声のみ実測。
+
+**Next**: everyday-mechanism/future-tech の scene 対応、full-produce E2E への
+SVG 出力統合、または 6本目 episode。

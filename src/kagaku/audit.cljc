@@ -11,10 +11,12 @@
      （iteration 9 で実 run 表示まで気付かなかった unit drift を spec 時点で捕える）
    - scene-sim-linked: scene が sim パラメータと連動しているか
    - claim-coverage: 全数値 claim が台本で言及されるか"
-  (:require [kagaku.scenario :as scenario]
+  (:require [clojure.string :as str]
+            [kagaku.scenario :as scenario]
             [kagaku.script :as script]
             [kagaku.derived :as derived]
-            [kagaku.scene :as scene]))
+            [kagaku.scene :as scene]
+            [kagaku.preview :as preview]))
 
 (defn- ok-axis
   ([id title] {:id id :title title :score 1.0 :findings []})
@@ -66,6 +68,27 @@
            :findings [(str "(" (:series episode) " は scene 未対応 — skip)")]
            :score 1.0)))
 
+(defn- ax-preview-renderable [{:keys [episode]}]
+  "scene を持つ episode で preview/svg が例外なく生成でき、円が空でないかを検査。
+   scene が『valid だが描けない』退行（iter16 の ortho 属性漏れのような、
+   snapshot は valid でも preview 側で落ちる/空になるクラス）を先回りで防ぐ。"
+  (if-let [snap (scene/scene-for-episode episode)]
+    (let [findings
+          (try
+            (let [circles (vec (preview/scene->circles snap))
+                  svg (preview/svg snap)]
+              (cond-> []
+                (empty? circles) (conj "preview: circles が空（描く mesh が無い）")
+                (not (str/starts-with? (str svg) "<svg"))
+                (conj "preview: svg 出力が <svg で始まらない")))
+            (catch #?(:clj Exception :cljs :default) e
+              [(str "preview: 生成中に例外 " #?(:clj (.getMessage e)
+                                             :cljs (.-message e)))]))]
+      (ok-axis :preview-renderable "scene が preview で SVG 化できる" findings))
+    (assoc (ok-axis :preview-renderable "scene が preview で SVG 化できる")
+           :findings [(str "(" (:series episode) " は scene 未対応 — skip)")]
+           :score 1.0)))
+
 (defn- ax-citations-verified [{:keys [episode citations] :or {citations {}}}]
   "（審査の可視化。verified なら 1.0、pending があれば減点し findings に出す。
    pending は『不正』でなく『人間の確認待ち』— 公開前に潰す TODO。）"
@@ -99,8 +122,9 @@
    {:weight 0.15 :check ax-script-valid}
    {:weight 0.20 :check ax-sim-unit-declared}
    {:weight 0.15 :check ax-derived-sound}
-   {:weight 0.10 :check ax-scene-linked}
-   {:weight 0.10 :check ax-citations-verified}
+   {:weight 0.08 :check ax-scene-linked}
+   {:weight 0.07 :check ax-preview-renderable}
+   {:weight 0.05 :check ax-citations-verified}
    {:weight 0.10 :check ax-claim-coverage}])
 
 (defn audit-episode

@@ -47,6 +47,20 @@
         scene-axis (first (filter #(= :scene-linked (:id %)) (:axes r)))]
     (is (= 1.0 (:score scene-axis)))))
 
+(deftest preview-renderable-axis
+  (testing "moon-approach scene は preview で SVG 化できる（circles 非空）"
+    (let [r (audit/audit-episode {:episode episode :script script})
+          ax (first (filter #(= :preview-renderable (:id %)) (:axes r)))]
+      (is (= 1.0 (:score ax)))))
+  (testing "scene 未対応 series は skip 満点（preview も見ない）"
+    (let [ep {:series :future-tech :question "x" :duration-s 300
+              :claims [{:id :a :text "y" :value {:quantity 1.0 :unit "ratio"}
+                        :source {:kind :constant :ref :standard-gravity}}]
+              :sim-cases []}
+          r (audit/audit-episode {:episode ep})
+          ax (first (filter #(= :preview-renderable (:id %)) (:axes r)))]
+      (is (= 1.0 (:score ax))))))
+
 (deftest citation-pending-does-not-fail-pass
   (testing "引用 PENDING は pass? を落とさない（人間確認待ちは正常状態）が findings には出す"
     (let [ep (update episode :claims conj
