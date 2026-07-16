@@ -437,3 +437,17 @@ CI と同一の nbb コマンドが緑であることのみ確認済み**。無�
 
 **Next**: Actions の実緑を push 後に確認、または (E) scene の animal-power 対応
 （audit の scene-linked が nomi でも満点に）、または (I) VOICEVOX 実 IO 実験。
+
+### Iteration 11 追記（push 後の Actions 確認）
+
+- push 後に `gh run list` を確認 → **run が 0 件**。原因を API で特定:
+  `gh api repos/gftdcojp/ai-gftd-dougaka-kagaku/actions/permissions` が
+  **`{"enabled":false}`** — この private repo は **GitHub Actions が無効化**
+  されている。したがって ci.yml は登録されても発火しない。
+- 正直な現状: **CI ゲートは「ローカルで CI と同一の nbb コマンドが緑」まで。
+  GitHub Actions 上の実行は repo 設定で無効なので実緑は得られていない（unknown
+  でなく、明確に「動かない」）。** 無人運転の自動品質ゲートにするには (a) repo の
+  Actions を有効化する（オーナー操作）か (b) ローカル/cron 側で
+  `nbb tools/audit.cljs` を回す運用にする、のどちらかが要る。follow-up。
+- workflow file 自体は正しい（ローカルで同一コマンド緑を確認済み）ので、
+  Actions を有効化すれば動く見込み。yml は残置し、有効化を follow-up とする。
