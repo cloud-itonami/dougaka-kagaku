@@ -110,6 +110,27 @@
     (throw (ex-info "numeric-experiment: unknown :experiment"
                     {:experiment (:experiment domain)}))))
 
+(defmethod solve :reduced-order-aero
+  ;; 空力抗力 F = ½ ρ Cd A v²（抗力方程式）。空気密度 ρ は constants の
+  ;; air-density-sea-level（出典 ISA、ρ0=1.225 kg/m³）× density-ratio。
+  ;; density-ratio で真空チューブ（減圧）を表す — 抗力は ρ に線形なので、
+  ;; 気圧を 1/N に薄めれば抗力も 1/N。Cd・前面積・速度は工学上の前提（domain 入力）。
+  [{:keys [domain]} constants]
+  (let [rho0 (constant constants :air-density-sea-level "kg/m^3")
+        {:keys [cd frontal-area-m2 speed-mps air-density-ratio]
+         :or {air-density-ratio 1.0}} domain]
+    (when-not (and (number? cd) (number? frontal-area-m2) (number? speed-mps))
+      (throw (ex-info "reduced-order-aero: :cd :frontal-area-m2 :speed-mps required"
+                      {:domain domain})))
+    (let [rho (* rho0 air-density-ratio)
+          drag (* 0.5 rho cd frontal-area-m2 speed-mps speed-mps)]
+      {:outputs {:drag-force-n {:quantity drag :unit "N"}
+                 :drag-power-kw {:quantity (/ (* drag speed-mps) 1000.0) :unit "kW"}
+                 ;; 入力エコー（台本の束縛先）
+                 :speed-mps {:quantity (double speed-mps) :unit "m/s"}
+                 :speed-kmh {:quantity (* 3.6 speed-mps) :unit "km/h"}
+                 :density-ratio {:quantity (double air-density-ratio) :unit "ratio"}}})))
+
 (defmethod solve :default
   ;; 高忠実度 kind は :exec 側（cae.solver hosts）へ。ここで解けない kind を
   ;; 黙って近似しない。
@@ -119,7 +140,8 @@
 
 (def rom-kinds
   "kagaku.rom がローカルに解ける kind（それ以外は :exec 委譲）。"
-  #{:tidal-scaling :two-body-orbit :scaling-law :numeric-experiment})
+  #{:tidal-scaling :two-body-orbit :scaling-law :numeric-experiment
+    :reduced-order-aero})
 
 (defn run-cases
   "episode の sim-cases のうち rom で解けるものを全て解き、

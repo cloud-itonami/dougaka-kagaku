@@ -1,0 +1,47 @@
+;; エピソード spec の実例 6 — 「真空チューブ列車は本当に速いのか（空力）」。
+;; future-tech series 初の sim episode。抗力方程式 F=½ρCdAv² を rom
+;; :reduced-order-aero で解き、ふつうの空気中 vs 1/1000 気圧チューブの抗力を
+;; 2 case 計算して derived で比を取る（空気密度は constants の air-density、出典 ISA）。
+{:series :future-tech
+ :question "真空チューブの中を走る列車は、なぜあんなに速くできるのか？"
+ :duration-s 300
+ :claims
+ [{:id :train-speed
+   :text "時速1000kmで走る列車を考える"
+   :value {:quantity 1000.0 :unit "km/h"}
+   :source {:kind :sim :case :open-air :output :speed-kmh}}
+  {:id :open-drag
+   :text "ふつうの空気中では、空気抵抗はおよそ6万6千ニュートンにもなる"
+   :value {:quantity 66166.0 :unit "N"}
+   :source {:kind :sim :case :open-air :output :drag-force-n}}
+  {:id :open-power
+   :text "この抵抗に打ち勝つには約1万8千キロワットもの力がいる"
+   :value {:quantity 18380.0 :unit "kW"}
+   :source {:kind :sim :case :open-air :output :drag-power-kw}}
+  {:id :tube-drag
+   :text "でも気圧を千分の一に薄めたチューブなら、抵抗はおよそ66ニュートンまで下がる"
+   :value {:quantity 66.166 :unit "N"}
+   :source {:kind :sim :case :vacuum-tube :output :drag-force-n}}
+  {:id :drag-cut
+   :text "つまり空気抵抗は1000分の1、これが真空チューブの速さの秘密"
+   :value {:quantity 1000.0 :unit "ratio"}
+   :source {:kind :derived :op :ratio :from [:open-drag :tube-drag]}}]
+ :sim-cases
+ [{:id :open-air
+   :solver {:kind :reduced-order-aero}
+   :domain {:cd 0.35 :frontal-area-m2 4.0 :speed-mps 277.78 :air-density-ratio 1.0
+            :note "Cd 0.35 / 前面積 4m² は流線形車両の代表値（工学前提）"}
+   :outputs {:speed-kmh {:unit "km/h"}
+             :drag-force-n {:unit "N"}
+             :drag-power-kw {:unit "kW"}}}
+  {:id :vacuum-tube
+   :solver {:kind :reduced-order-aero}
+   :domain {:cd 0.35 :frontal-area-m2 4.0 :speed-mps 277.78 :air-density-ratio 0.001
+            :note "1/1000 気圧に減圧したチューブ"}
+   :outputs {:drag-force-n {:unit "N"}}}]
+ :beats
+ ["導入: 真空チューブ列車（ハイパーループ）はなぜ夢の速度と言われるのか"
+  "仕掛け: 速さの敵は空気抵抗。抵抗は速度の2乗、そして空気の濃さに比例する"
+  "sim: 時速1000kmでの抗力を、ふつうの空気とチューブ内で計算・可視化"
+  "結果: 気圧を1000分の1にすると、抗力も1000分の1。必要な力が桁違いに減る"
+  "まとめ: 真空チューブの本質は『空気を減らして抵抗を消す』こと"]}

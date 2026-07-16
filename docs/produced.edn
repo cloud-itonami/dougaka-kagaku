@@ -1,4 +1,4 @@
 ;; 作成済み topic-id の append-only リスト（compose の除外に使う）。
 ;; content/*.edn の episode が対応する series.edn topic を作ったら追記する。
 ;; tsuki-half-distance = :moon-half-distance, nomi-jump = :flea-jump
-[:moon-half-distance :flea-jump :pi-monte-carlo :ant-strength :paper-fold-moon]
+[:moon-half-distance :flea-jump :pi-monte-carlo :ant-strength :paper-fold-moon :hyperloop-drag]

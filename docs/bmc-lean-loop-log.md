@@ -774,3 +774,43 @@ WebGPU render は未実測）。
 **Next**: future-tech/everyday-mechanism の scene or episode 対応、
 実運用の human-review→approve→publish フローの :exec 側配線（別スコープ）、
 または 6本目 episode。
+
+## Iteration 20 — 2026-07-17
+
+**Build**:
+
+- rom に **`:reduced-order-aero` solver 実装**（抗力方程式 F=½ρCdAv²）。
+  空気密度 ρ は constants の air-density-sea-level（**出典 ISA sea level 15°C、
+  1.225 kg/m³**）× density-ratio。density-ratio で真空チューブの減圧を表現し、
+  抗力が ρ に線形なことを使う。Cd/前面積/速度は工学前提（domain 入力、
+  代表値を note に明記）。出力: drag-force-n / drag-power-kw / speed 各エコー。
+  rom-kinds に追加、simcase は既に有効 kind として宣言済み。
+- units に力・仕事率単位（N/kN/W/kW）追加。
+- 6本目 episode `content/hyperloop-drag.edn`（:future-tech、「真空チューブ列車
+  はなぜ速いのか」）。**future-tech series 初の sim episode**。open-air と
+  vacuum-tube の 2 sim case を計算し、derived :ratio で抗力 1000倍削減を示す
+  （sim 4 claim + derived 1）。時速1000km で開放抗力 66kN・18MW、チューブ内
+  66N。「気圧を1/1000にすると抵抗も1/1000」を全 sim 由来で。
+- tests 100→101（226 assertions）green。audit 全6episode ALL PASS mean 99%。
+  produced.edn 追記。**4/5 series が sim で解ける**（everyday-mechanism の
+  nagare :fvm-simple のみ rom 非対応、正直に残す）。
+
+**Learn**:
+
+- チャンネルの副目的「kotoba-lang sim スタックの性能を試す」（ADR）に沿って
+  rom を 1 solver 拡張。**抗力方程式は物理係数（空気密度）を constants から
+  引き、係数の出典（ISA）を明記**した — 「AI に算術をさせない」の物理係数版
+  （ρ を LLM が覚えた値でなく出典付き定数から取る）。Cd/前面積は工学前提と
+  明示して物理定数と区別。
+- derived が **2 つの別 sim case を跨いで比を取れた**（open-drag と tube-drag、
+  同 N 次元 → ratio 1000）。iter17 は sim+constant 跨ぎ、今回は sim+sim（別
+  case）跨ぎ — derived の適用範囲が広いことの再確認。
+- digit 検査が相槌の「1万8千」「6万から66」を捕捉（安全網 5 度目）。数値の
+  繰り返し相槌は定性表現に、が定着した対処型。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 6本（tsuki/nomi/pi/ant/paper/hyperloop）。sim 対応 series 4/5。
+audit mean 99%。bench 台帳に reduced-order-aero の 2 datom。実 IO は音声のみ実測。
+
+**Next**: everyday-mechanism（nagare :fvm-simple、rom 非対応 = :exec 委譲の
+扱いを試す）、future-tech の scene 対応、または hyperloop に scene。

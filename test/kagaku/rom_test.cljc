@@ -88,6 +88,28 @@
       (is (= a b))
       (is (< 3.0 pi-est 3.3)))))
 
+(deftest reduced-order-aero-drag
+  (testing "抗力 F=½ρCdAv²。真空チューブ（density 1/1000）で抗力も 1/1000"
+    (let [open (rom/solve {:solver {:kind :reduced-order-aero}
+                           :domain {:cd 0.35 :frontal-area-m2 4.0 :speed-mps 277.78
+                                    :air-density-ratio 1.0}}
+                          {:air-density-sea-level {:quantity 1.225 :unit "kg/m^3"}})
+          tube (rom/solve {:solver {:kind :reduced-order-aero}
+                           :domain {:cd 0.35 :frontal-area-m2 4.0 :speed-mps 277.78
+                                    :air-density-ratio 0.001}}
+                          {:air-density-sea-level {:quantity 1.225 :unit "kg/m^3"}})
+          od (get-in open [:outputs :drag-force-n :quantity])
+          td (get-in tube [:outputs :drag-force-n :quantity])]
+      (is (< 66000.0 od 66300.0))
+      (is (< 999.9 (/ od td) 1000.1))
+      (testing "power = drag×v/1000 kW、速度エコー km/h"
+        (is (< 18000.0 (get-in open [:outputs :drag-power-kw :quantity]) 18800.0))
+        (is (< 999.0 (get-in open [:outputs :speed-kmh :quantity]) 1001.0)))))
+  (testing "必須 domain 欠如は例外（黙って近似しない）"
+    (is (thrown? #?(:clj Exception :cljs js/Error)
+                 (rom/solve {:solver {:kind :reduced-order-aero} :domain {:cd 0.3}}
+                            {:air-density-sea-level {:quantity 1.225 :unit "kg/m^3"}})))))
+
 (deftest missing-constant-throws
   (testing "定数テーブルに無い ref は黙って補完せず例外"
     (is (thrown? #?(:clj Exception :cljs js/Error)

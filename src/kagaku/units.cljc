@@ -25,6 +25,9 @@
    "m/s" [:speed 1.0]
    "km/h" [:speed 0.2777777777777778]
    "N" [:force 1.0]
+   "kN" [:force 1000.0]
+   "kW" [:power 1000.0]
+   "W" [:power 1.0]
    "ratio" [:dimensionless 1.0]    ; 倍率（8倍・850倍）
    "1" [:dimensionless 1.0]        ; 純粋な無次元数（円周率・誤差、バレ数）
    "count" [:count 1.0]})          ; 個数（10万個）

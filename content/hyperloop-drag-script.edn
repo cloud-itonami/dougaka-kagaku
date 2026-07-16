@@ -1,0 +1,20 @@
+;; 台本 — content/hyperloop-drag.edn に対応。数値は全て {{claim-id}} placeholder。
+{:scenes
+ [{:location "未来都市・透明チューブを走る列車"
+   :action "長い透明チューブの中を流線形の列車が高速で走る"
+   :lines
+   [{:speaker "right" :text "真空チューブの列車って、なんでそんなに速くできるの？" :emotion "normal"}
+    {:speaker "left" :text "鍵は空気抵抗だ。ためしに時速 {{train-speed}} で走らせてみよう" :emotion "normal"}
+    {:speaker "right" :text "そんなスピード、空気の壁がすごそう" :emotion "surprised"}]}
+  {:location "シミュレーション空間・空気中の抗力"
+   :action "列車の前面にかかる空気抵抗を矢印と数値で可視化"
+   :lines
+   [{:speaker "left" :text "ふつうの空気の中だと、抵抗はおよそ {{open-drag}}。打ち勝つのに {{open-power}} もいる" :emotion "normal"}
+    {:speaker "right" :text "そんなに！？ 大きな発電所いくつ分だろう" :emotion "surprised"}
+    {:speaker "left" :text "空気抵抗は速さの二乗で効く。だから高速ほど、この壁が重くのしかかる" :emotion "normal"}]}
+  {:location "シミュレーション空間・減圧したチューブ"
+   :action "チューブ内の空気を薄くすると抵抗の矢印が一気に縮む"
+   :lines
+   [{:speaker "left" :text "そこで気圧を薄くする。千分の一に減らすと、抵抗は {{tube-drag}} まで下がる" :emotion "happy"}
+    {:speaker "right" :text "さっきの大きな抵抗が、一気に小さく！？" :emotion "surprised"}
+    {:speaker "left" :text "そう、空気抵抗は {{drag-cut}} になる。真空チューブの本質は、空気を減らして抵抗を消すことなんだ" :emotion "normal"}]}]}
