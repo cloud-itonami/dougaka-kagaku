@@ -1,0 +1,51 @@
+;; 「次に何を作るか」を機械選定する（compose stage の上流ツール）:
+;;   nbb --classpath src tools/next_topic.cljs [series] [--last <series>]
+;; resources/series.edn のカタログ + docs/produced.edn（作成済み topic-id の
+;; append-only リスト、無ければ空）から priorityScore + series ローテーションで
+;; 次の topic を 1 件選び、episode 種を表示する。決定論（乱数・時刻なし）。
+(ns next-topic
+  (:require [cljs.reader :as reader]
+            [clojure.pprint :refer [pprint]]
+            [clojure.string :as str]
+            [kagaku.compose :as compose]
+            ["fs" :as fs]))
+
+(def args (vec *command-line-args*))
+(def last-series
+  (when-let [i (some (fn [[idx a]] (when (= a "--last") idx))
+                     (map-indexed vector args))]
+    (keyword (nth args (inc i)))))
+(def series (some-> (first (remove #(or (= "--last" %)
+                                        (= (some-> last-series name) %)) args))
+                    keyword))
+
+(def catalog (reader/read-string (fs/readFileSync "resources/series.edn" "utf8")))
+(def produced-ids
+  (if (fs/existsSync "docs/produced.edn")
+    (set (reader/read-string (fs/readFileSync "docs/produced.edn" "utf8")))
+    #{}))
+
+(println "== next-topic 選定")
+(println "   produced:" (if (seq produced-ids) (str/join ", " (map name produced-ids)) "(なし)")
+         "| series filter:" (or series "(全 series)")
+         "| last-series:" (or last-series "(なし)"))
+
+(println "\n-- ranked（実効スコア順、上位 6）:")
+(doseq [{:keys [series topic-id priority question]}
+        (take 6 (compose/rank catalog {:produced-ids produced-ids
+                                       :last-series last-series}))]
+  (println (str "   " (name series) " / " (name topic-id)
+                " (p=" priority ") — " question)))
+
+(def pick (compose/pick-topic catalog (cond-> {:produced-ids produced-ids
+                                               :last-series last-series}
+                                        series (assoc :series series))))
+(if pick
+  (do
+    (println "\n== 次に作る topic:")
+    (println "   " (name (:series pick)) "/" (name (:topic-id pick)))
+    (println "   問い:" (:question pick))
+    (println "   sim-kinds:" (:sim-kinds pick))
+    (println "\n-- episode seed:")
+    (pprint (compose/to-episode-seed pick)))
+  (println "\n== 候補なし（全 topic 作成済み or series が空）"))

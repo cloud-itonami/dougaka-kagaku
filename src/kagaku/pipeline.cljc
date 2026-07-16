@@ -107,7 +107,10 @@
     :audit
     (assoc state :status :done)
 
-    ;; その他の stage は実行計画を :exec 側が消費した前提で前進のみ
+    ;; その他の stage は実行計画を :exec 側が消費した前提で前進のみ。
+    ;; :compose の topic 選定は pipeline の上流（kagaku.compose/pick-topic、
+    ;; tools/next_topic.cljs）で行い、選ばれた episode を state に入れて run-plan
+    ;; を回す設計 — pipeline 内の :compose は passthrough。
     (if-let [nxt (next-stage stage)]
       (assoc state :stage nxt)
       (assoc state :status :done))))

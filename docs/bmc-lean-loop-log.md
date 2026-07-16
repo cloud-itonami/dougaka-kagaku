@@ -282,3 +282,42 @@ render 後の測定・人間レビュー・publish は実 render 待ちで unkno
 
 **Next**: 実 IO 配線の最初の一歩（VOICEVOX /v1/audio/speech の実呼び出し 1 行、
 または kami-engine headless render の 1 シーン）、または (D) compose topic 選定。
+
+## Iteration 8 — 2026-07-16
+
+**Build**:
+
+- `kagaku.compose` — compose stage の topic 選定（純関数）。yukkuri
+  topics.cljc の pick-topic（priorityScore 順 + 既出除外）を移植し、
+  series.edn 形（{:series {:topics [{:id :q :priority}]}}）に合わせ、さらに
+  **series ローテーション**（直近 series を penalty で軽く後回し、圧倒的高
+  priority は覆さない）を追加。決定論（乱数・時刻なし、tie は series名→id 順）。
+- `tools/next_topic.cljs` — 「次に何を作るか」を機械選定するツール。
+  resources/series.edn + docs/produced.edn（作成済み topic-id の append-only
+  リスト）から次 topic を選び episode 種を表示。
+- `docs/produced.edn` 新設（tsuki=moon-half-distance, nomi=flea-jump 登録）。
+- tests 73 → 82（166 assertions）green。実データ実行: 既出 2 件を除外し
+  ant-strength（animal-power, p=85）を選定、episode 種生成。
+
+**Learn**:
+
+- これで pipeline の主要 stage（compose/design-sim/generate-script/factcheck/
+  render-sim-visual/synthesize-voice）がすべて実装 or 明示的 passthrough に
+  なった。compose は「pipeline 内 stage」でなく「pipeline の上流の選定関数」に
+  置くのが正しい境界だった（episode を選んでから produce を回す）— pipeline の
+  :compose は passthrough のままにし、選定は kagaku.compose に分離。
+- series ローテーションの penalty 設計: priority 粒度（5〜90）に対し penalty 15 は
+  「僅差の別 series を優先するが 90 vs 85 の圧は覆さない」バランス。テストで
+  両方向（覆す/覆さない）を固定。無人運転で同 series が連続しない土台。
+- 実害の発火なし（純関数の移植 + 決定論設計）。yukkuri 側が既に pick-topic を
+  pure に分離していた資産が効いた（iteration 5 の voice 移植と同じ再利用効果）。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+pipeline 主要 stage は全実装。残る未配線は実 IO のみ（VOICEVOX 実呼び出し /
+kami-engine 実 render / YouTube upload / D1）。「次に作る topic」は機械化された
+（無人運転の入口）が、topic→claims/sim-cases/台本の自動生成（LLM 実呼び出し）は
+未配線で unknown。
+
+**Next**: 実 IO 配線の最初の一歩（VOICEVOX /v1/audio/speech を実際に叩いて
+tsuki の 1 行を wav 化、または kami-engine headless で earth-moon を 1 枚 render）、
+または (E) scene の animal-power 対応 / (G) 3本目 episode。

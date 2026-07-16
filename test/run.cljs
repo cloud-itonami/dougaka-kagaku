@@ -9,10 +9,11 @@
             [kagaku.script-test]
             [kagaku.derived-test]
             [kagaku.voice-test]
-            [kagaku.scene-test]))
+            [kagaku.scene-test]
+            [kagaku.compose-test]))
 
 (defmethod t/report [:cljs.test/default :end-run-tests] [m]
   (when-not (t/successful? m)
     (set! (.-exitCode js/process) 1)))
 
-(t/run-tests 'kagaku.scenario-test 'kagaku.simcase-test 'kagaku.factcheck-test 'kagaku.rom-test 'kagaku.script-test 'kagaku.derived-test 'kagaku.voice-test 'kagaku.scene-test)
+(t/run-tests 'kagaku.scenario-test 'kagaku.simcase-test 'kagaku.factcheck-test 'kagaku.rom-test 'kagaku.script-test 'kagaku.derived-test 'kagaku.voice-test 'kagaku.scene-test 'kagaku.compose-test)

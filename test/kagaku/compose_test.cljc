@@ -1,0 +1,72 @@
+(ns kagaku.compose-test
+  (:require [clojure.test :refer [deftest is testing]]
+            [kagaku.compose :as compose]))
+
+(def catalog
+  {:moon-approach
+   {:sim-kinds [:tidal-scaling]
+    :topics [{:id :moon-half :q "半分の距離" :priority 90}
+             {:id :moon-roche :q "ロッシュ限界" :priority 80}]}
+   :animal-power
+   {:sim-kinds [:scaling-law]
+    :topics [{:id :flea-jump :q "ノミ" :priority 85}]}
+   :three-min-math
+   {:sim-kinds [:numeric-experiment]
+    :topics [{:id :pi :q "円周率" :priority 85}]}})
+
+(deftest candidates-flatten
+  (is (= 4 (count (compose/candidates catalog))))
+  (is (every? #(and (:series %) (:topic-id %) (:question %))
+              (compose/candidates catalog))))
+
+(deftest picks-highest-priority
+  (testing "最高 priority（moon-half=90）を選ぶ"
+    (is (= :moon-half (:topic-id (compose/pick-topic catalog))))))
+
+(deftest excludes-produced
+  (testing "既出 topic は除外して次点を選ぶ"
+    (let [p (compose/pick-topic catalog {:produced-ids #{:moon-half}})]
+      ;; moon-roche=80, flea-jump=85, pi=85 → 85 が 2 つ、tie は series 名順
+      ;; (animal-power < three-min-math) で flea-jump
+      (is (= :flea-jump (:topic-id p))))))
+
+(deftest series-filter
+  (is (= :moon-roche
+         (:topic-id (compose/pick-topic catalog {:series :moon-approach
+                                                 :produced-ids #{:moon-half}})))))
+
+(deftest rotation-penalty-rotates-series
+  (testing "直近が moon-approach なら、僅差の別 series を優先（90 vs 85 は覆さない）"
+    ;; moon-half=90 だが last-series penalty 15 → 75 に下がり、flea-jump=85 が勝つ
+    (let [p (compose/pick-topic catalog {:last-series :moon-approach})]
+      (is (not= :moon-approach (:series p)))
+      (is (= :flea-jump (:topic-id p)))))
+  (testing "圧倒的高 priority は penalty でも覆らない"
+    (let [big {:moon-approach {:topics [{:id :huge :q "x" :priority 100}]}
+               :animal-power {:topics [{:id :small :q "y" :priority 50}]}}]
+      (is (= :huge (:topic-id (compose/pick-topic big {:last-series :moon-approach})))))))
+
+(deftest deterministic
+  (testing "同じ入力は常に同じ選定（乱数・時刻を使わない）"
+    (is (= (compose/pick-topic catalog {:produced-ids #{:moon-half}})
+           (compose/pick-topic catalog {:produced-ids #{:moon-half}})))))
+
+(deftest empty-pool-nil
+  (is (nil? (compose/pick-topic catalog {:produced-ids #{:moon-half :moon-roche
+                                                         :flea-jump :pi}}))))
+
+(deftest episode-seed-shape
+  (let [seed (compose/to-episode-seed (compose/pick-topic catalog))]
+    (is (= :moon-approach (:series seed)))
+    (is (= 300 (:duration-s seed)))
+    (is (= [] (:claims seed)))
+    (is (= [] (:sim-cases seed))))
+  (testing "three-min-math は短尺 180s"
+    (is (= 180 (:duration-s (compose/to-episode-seed
+                             {:series :three-min-math :topic-id :pi
+                              :question "円周率" :sim-kinds [:numeric-experiment]}))))))
+
+(deftest rank-orders-all
+  (let [r (compose/rank catalog)]
+    (is (= :moon-half (:topic-id (first r))))
+    (is (= 4 (count r)))))
