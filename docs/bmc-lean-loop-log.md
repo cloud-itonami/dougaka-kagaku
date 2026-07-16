@@ -814,3 +814,43 @@ audit mean 99%。bench 台帳に reduced-order-aero の 2 datom。実 IO は音�
 
 **Next**: everyday-mechanism（nagare :fvm-simple、rom 非対応 = :exec 委譲の
 扱いを試す）、future-tech の scene 対応、または hyperloop に scene。
+
+## Iteration 21 — 2026-07-17
+
+**Build**:
+
+- **:exec 委譲 episode パターンの初例**を確立。7本目 episode
+  `content/kettle-whistle.edn`（:everyday-mechanism、「やかんはなぜ鳴る？」）。
+  笛の流れは CFD（nagare :fvm-simple）でしか解けず rom 非対応。そこで:
+  - sim-case は :fvm-simple で**宣言**する（:exec が後で流れを可視化する用）が、
+    **数値 claim をそこに束縛しない**。
+  - 数値は :citation（笛の実測周波数 ~3000Hz、人間検証必須）と :constant
+    （音速 343m/s、出典 constants）のみ。
+  - 役割分担: sim =「絵（流れの可視化）」、citation/constant =「数値」。
+- E2E で設計どおり動作: scenario valid（:fvm-simple case 込み）/ sim claim 無で
+  claim-consistency 空 / constant OK / citation PENDING で **factcheck が正しく
+  :rejected**（人間の出典確認待ち）/ bench 空（rom 未実行 = 正直、CFD は :exec で
+  bench）。audit は pass?（citation 非-blocker）95%。
+- produced.edn 追記。tests 101 green（episode 追加のみ、lib 不変）。audit
+  全7episode ALL PASS mean 99%。
+
+**Learn**:
+
+- **rom で解けない題材（CFD 系 everyday-mechanism）を隠さず扱う道が開いた**。
+  「sim-case は宣言するが claim を束縛しない、数値は citation/constant」という
+  分離で、全 5 series が（sim 直解 4 + :exec 委譲 1 で）カバー可能に。
+  sim スタックが解けない領域を「解けるふり」せず、citation で人間検証に回す
+  正直な構成 — チャンネルの誠実性の設計（AI 非算術）と一貫。
+- この pattern は既存の部品（citation gate / sim-case validation / rom skip）の
+  組合せだけで成立した（新コードゼロ）。iter1-20 で積んだ各 stage の pure 設計が、
+  新しい episode 型を「データを書くだけ」で受け入れられる柔軟性を持っていた。
+- kettle は full-produce で :rejected（citation PENDING）だが、これは nomi と
+  同じ「正常な人間待ち」状態。audit は pass?（構造 OK）で citation を減点のみ、
+  full-produce gate は :rejected（公開ブロック）— 2 つの gate の役割差が明確。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 7本。series カバレッジ 5/5（sim 直解 4: moon/animal/three-min/future、
+:exec 委譲 1: everyday-mechanism）。audit mean 99%。実 IO は音声のみ実測。
+
+**Next**: 全 series カバー達成。次は深さ方向（各 series の 2 本目、scene 拡充、
+実 IO の 2 モダリティ目 kami render harness）または cadence 運用設計。

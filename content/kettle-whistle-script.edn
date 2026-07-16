@@ -1,0 +1,20 @@
+;; 台本 — content/kettle-whistle.edn に対応。数値は全て {{claim-id}} placeholder。
+{:scenes
+ [{:location "台所・火にかけたやかん"
+   :action "湯気を上げて鳴りはじめるやかんのアップ"
+   :lines
+   [{:speaker "right" :text "やかんの『ピー』って音、あれって何が鳴ってるの？" :emotion "normal"}
+    {:speaker "left" :text "笛の部分だよ。中に小さな二枚の板が入っているんだ" :emotion "normal"}
+    {:speaker "right" :text "板が音を出してるの？" :emotion "surprised"}]}
+  {:location "シミュレーション空間・笛の断面"
+   :action "笛の二枚板と、その隙間を通る空気の流れを CFD で可視化（渦が生まれる）"
+   :lines
+   [{:speaker "left" :text "蒸気が細い隙間を通ると、向こう側でくるくる渦ができる。これが空気を震わせる" :emotion "normal"}
+    {:speaker "right" :text "流れが渦になって、それが音になるんだ" :emotion "happy"}
+    {:speaker "left" :text "エッジトーンっていう現象だよ。リコーダーやオルガンの笛と同じしくみ" :emotion "normal"}]}
+  {:location "シミュレーション空間・音が耳へ届く"
+   :action "笛から音波が広がり、耳のアイコンへ届く"
+   :lines
+   [{:speaker "left" :text "できる音の高さは、およそ {{whistle-freq}}。かなり高い音だ" :emotion "normal"}
+    {:speaker "right" :text "だからあんなにキーンと聞こえるんだね" :emotion "happy"}
+    {:speaker "left" :text "その音は秒速 {{sound-speed}} で空気を伝わって、耳に届く。笛は流れを音に変える装置なんだ" :emotion "normal"}]}]}

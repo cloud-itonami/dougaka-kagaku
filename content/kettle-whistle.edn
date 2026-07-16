@@ -1,0 +1,37 @@
+;; エピソード spec の実例 7 — 「やかんはなぜ鳴る？（流れの可視化）」。
+;; everyday-mechanism series。**:exec 委譲パターンの初例**:
+;; 笛の流れは CFD（nagare :fvm-simple）でしか解けず rom では計算できない。
+;; そこで sim-case は :fvm-simple で宣言するが（:exec が後で流れを可視化する用）、
+;; 数値 claim はそこに束縛しない — 数値は :citation（実測の笛の周波数、人間検証必須）
+;; と :constant（音速、出典付き）のみ。sim は「絵（流れの可視化）」担当、数値は
+;; citation/constant 担当、と役割を分ける（rom で解けないことを隠さない正直な構成）。
+;;
+;; ⚠ whistle-freq は :citation なので docs/citations.edn に人間が :verified-by を
+;; 付けるまで factcheck の provenance gate で正しく :rejected される（設計どおり）。
+{:series :everyday-mechanism
+ :question "やかんのお湯がわくと、どうしてあの高い音が鳴るのか？"
+ :duration-s 300
+ :claims
+ [{:id :whistle-freq
+   :text "やかんの笛の音はおよそ3000ヘルツの高い音"
+   :value {:quantity 3000.0 :unit "Hz"}
+   :source {:kind :citation :ref "TODO: やかん笛（edge-tone/hole-tone）の実測周波数の一次資料（要出典確認）"}}
+  {:id :sound-speed
+   :text "その音は秒速343メートルで空気を伝わる"
+   :value {:quantity 343.0 :unit "m/s"}
+   :source {:kind :constant :ref :speed-of-sound-20c}}]
+ :sim-cases
+ [{:id :spout-flow
+   :solver {:kind :fvm-simple}
+   ;; ⚠ rom では解けない（nagare :exec に委譲）。数値 claim はこの case に束縛
+   ;; しない — この sim は笛の内部を通る空気の流れ（edge tone）の可視化専用。
+   :domain {:geometry :two-plate-whistle
+            :inlet-velocity-mps 5.0
+            :note "笛の二枚板を通る蒸気/空気流。:exec 側 nagare が流れを解いて可視化。rom 非対応"}
+   :outputs {:velocity-field {:unit "m/s"}}}]
+ :beats
+ ["導入: やかんの『ピー』という音、あれは何が鳴っているのか"
+  "仕組み: 笛の中の二枚の板。蒸気が細い隙間を通ると渦ができ、音になる（edge tone）"
+  "sim: 板の隙間を通る空気の流れを CFD で可視化（渦の生成）"
+  "数値: 音の高さはおよそ3000ヘルツ。音速343m/sで耳に届く"
+  "まとめ: 笛は『流れが振動に変わる』装置。楽器のリコーダーと同じ原理"]}
