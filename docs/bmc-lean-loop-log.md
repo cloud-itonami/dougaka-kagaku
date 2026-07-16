@@ -572,3 +572,53 @@ mean 98%。実 IO は音声のみ実測（iter13）、他モダリティ未実�
 **Next**: (M) kami-engine 実 render 実験（scene→実画像）、(L) three-min-math
 scene、または 5本目 episode（next_topic 推奨: everyday-mechanism kettle-whistle
 だが nagare :fvm-simple は rom 非対応で :exec 委譲 — claims の固め方に工夫要）。
+
+## Iteration 15 — 2026-07-17
+
+**調査結果（kami-engine 実 render 経路）— 正直に**:
+
+- **kami-engine-render は archived プレースホルダ**（ADR-2607102200 addendum 8-9、
+  west group `archived`、「Do not add new code here」）。実体は `kotoba-lang/webgpu`
+  （ブラウザ WebGPU executor）/ `kami-engine-sdk`（ECS/render-IR）に移動済み。
+- **実 render 経路は headless Chromium + Playwright + WebGPU（macOS は Metal
+  backend）+ コンパイル済み `.kotoba` guest**（`wasm-webcomponent/test/render/
+  verify-render-*.mjs`、`webgpu-harness.mjs`）。index.html をロードし canvas を
+  screenshot → PNG decode してピクセル検証する重い経路。`npm install` +
+  `npx playwright install chromium` が前提。
+- **結論: kagaku の scene snapshot を実 WebGPU で render してピクセルバイトを出す
+  のは本反復の範囲外**（重い harness を立てる必要があり、プロンプトが許可した
+  「調査止まり」ケース）。実 render のピクセルは **未実測（unknown）**。
+
+**Build（実 render の代わりに出せた軽い成果）**:
+
+- `kagaku.preview` — scene snapshot → **非-authoritative な 2D SVG サムネイル**
+  （human-review 用）。正射影正面ビューで mesh を円に、material albedo を色に、
+  env clear を背景色に落とす。repo-wide 3D 規則が**明示的に許可する
+  『thumbnail / diagram / 非3D preview』例外**に限定し、docstring・SVG コメント・
+  ツール出力の 3 箇所で「authoritative render は WebGPU/kami-engine」と明記。
+- `tools/try_render.cljs` — episode の scene を SVG に書き出す。tsuki で実行:
+  地球（青大円 cx=0 r=6.371）+ 月（灰小円 cx=192.2=半分の距離 r=1.737）、
+  背景 env clear、502 bytes の妥当な SVG。sim distance-ratio がサムネイル上の
+  月位置に正しく反映（絵が sim 連動）。
+- tests 92→96（204 assertions）green。audit ALL PASS mean 98% 維持。
+
+**Learn**:
+
+- 実 IO の 2 モダリティ目（画）は音声（iter13、plan→実wav 成功）と違い、
+  **authoritative 経路が重すぎて本反復では実測できなかった**。正直に「調査止まり・
+  実 render 未実測」と記録し、捏造した「render できた」を書かない。
+- ただし「実 render は無理でも human-review を助ける安価な preview は出せる」を
+  3D 規則の thumbnail 例外の範囲で実現。**authoritative（WebGPU）と
+  non-authoritative（SVG thumbnail）を役割・ラベルで厳密に分けた** — 絵の正は
+  WebGPU、配置の一目確認は SVG、と混同させない（iter14 の「絵=直感・数字=sim」
+  の役割分担の render 版）。
+- SVG サムネイルが sim distance-ratio 連動を保った（月 cx=192.2）ので、
+  human-review 段で「数字（8倍/9.66日）と絵（月の位置）が同じ sim 由来か」を
+  WebGPU 無しでも目視確認できる。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+実 IO: 音声=plan→実wav 実測済み、画=**authoritative WebGPU render は未実測**
+（非-authoritative SVG thumbnail のみ）。YouTube/D1 も未実測。
+
+**Next**: 実 WebGPU render の harness を立てる（重い、別途スコープ）、
+(L) three-min-math scene、または 5本目 episode。

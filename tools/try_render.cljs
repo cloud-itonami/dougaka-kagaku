@@ -1,0 +1,32 @@
+;; scene の render 実験:
+;;   nbb --classpath src tools/try_render.cljs content/tsuki-half-distance.edn [out.svg]
+;; episode の scene snapshot を非-authoritative な 2D SVG サムネイルに落として書き出す。
+;;
+;; ⚠ これは authoritative な 3D render ではない。実 render 経路は WebGPU/kami-engine
+;; （wasm-webcomponent の headless Chromium + WebGPU harness、Playwright 依存）で、
+;; 本ツールはその重い経路を立てずに human-review 用の配置プレビューを出すだけ。
+;; 実 WebGPU render のピクセルバイトは本ツールでは未実測（調査結果は BMC ログ参照）。
+(ns try-render
+  (:require [cljs.reader :as reader]
+            [kagaku.scene :as scene]
+            [kagaku.preview :as preview]
+            ["fs" :as fs]))
+
+(def args (vec *command-line-args*))
+(def episode-path (or (first args) "content/tsuki-half-distance.edn"))
+(def out (or (second args)
+             "/private/tmp/claude-501/-Users-junkawasaki-github-com-junkawasaki/80eb0bfa-400a-400a-8326-1ad3e8d37674/scratchpad/kagaku-scene.svg"))
+
+(def episode (reader/read-string (fs/readFileSync episode-path "utf8")))
+(def snap (scene/scene-for-episode episode))
+
+(println "== scene preview（非-authoritative 2D thumbnail）")
+(if snap
+  (let [{:keys [valid?]} (scene/validate snap)
+        svg (preview/svg snap)]
+    (println "   scene:" (:snapshot/name snap) "valid?" valid?)
+    (println "   circles:" (mapv :name (preview/scene->circles snap)))
+    (fs/writeFileSync out svg)
+    (println "   SVG written:" out "(" (count svg) "bytes )")
+    (println "\n   ⚠ authoritative render は WebGPU/kami-engine（未実測、調査は BMC 参照）"))
+  (println "   この episode の series は scene 未対応（正直に nil）"))
