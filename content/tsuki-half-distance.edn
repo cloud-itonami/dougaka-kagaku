@@ -1,0 +1,37 @@
+;; エピソード spec の実例 — 「もし月が今の半分の距離に来たら」。
+;; 潮汐力は距離の 3 乗に反比例するので 1/2 距離 → 2^3 = 8 倍。
+;; この「8倍」を台本に書けるのは sim case :moon-tidal の出力に束縛されて
+;; いるからであって、LLM が計算したからではない（factcheck gate が強制）。
+{:series :moon-approach
+ :question "もし月が今の半分の距離まで近づいたら、潮はどうなる？"
+ :duration-s 300
+ :claims
+ [{:id :current-distance
+   :text "月までの平均距離は約38万4400km"
+   :value {:quantity 384400.0 :unit "km"}
+   :source {:kind :constant :ref :earth-moon-distance-mean}}
+  {:id :tidal-ratio
+   :text "距離が半分になると潮汐力は8倍になる"
+   :value {:quantity 8.0 :unit "ratio"}
+   :source {:kind :sim :case :moon-tidal :output :tidal-force-ratio}}
+  {:id :orbital-period
+   :text "半分の距離での公転周期は約9.7日に縮む"
+   :value {:quantity 9.66 :unit "day"}
+   :source {:kind :sim :case :moon-orbit :output :orbital-period-days}}]
+ :sim-cases
+ [{:id :moon-tidal
+   :solver {:kind :tidal-scaling}
+   :domain {:distance-ratio 0.5}
+   :outputs {:tidal-force-ratio {:unit "ratio"}}}
+  {:id :moon-orbit
+   :solver {:kind :two-body-orbit}
+   :domain {:semi-major-axis-km 192200.0
+            :primary :earth-mass :secondary :moon-mass}
+   :budget {:steps 100000}
+   :outputs {:orbital-period-days {:unit "day"}}}]
+ :beats
+ ["導入: 満月が今の2倍の大きさに見える夜空のレンダリング"
+  "現在の月: 距離と潮の関係（kami-engine 地球-月 3D シーン）"
+  "sim: 距離を半分に — 潮汐力 8 倍の導出過程を可視化"
+  "海はどうなるか: 沿岸への影響（CFD 可視化は強化レーン）"
+  "まとめ: なぜ 2 倍ではなく 8 倍か（逆 3 乗則）"]}

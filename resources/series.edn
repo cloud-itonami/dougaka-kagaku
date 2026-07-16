@@ -1,0 +1,47 @@
+;; series カタログ — 各 series の topic 候補と使う solver kind。
+;; series id の SSoT は src/kagaku/scenario.cljc の `series`（ここは topic カタログ）。
+;; topic は compose stage が priorityScore（yukkuri topics.cljc 方式）で選定する。
+{:moon-approach
+ {:title "もし月が地球に近づいたら"
+  :description "軌道・潮汐の what-if。距離パラメータを振って潮汐力・潮位・軌道周期を sim で出す"
+  :sim-kinds [:two-body-orbit :tidal-scaling :fvm-simple]
+  :topics
+  [{:id :moon-half-distance :q "月が今の半分の距離に来たら潮はどうなる？" :priority 90}
+   {:id :moon-roche-limit :q "月はどこまで近づけるのか（ロッシュ限界）" :priority 80}
+   {:id :moon-gone :q "月が消えたら地球の一日はどう変わる？" :priority 70}]}
+
+ :animal-power
+ {:title "動物の身体能力比較"
+  :description "スケーリング則（アロメトリー）と生体力学。『ノミが人間サイズなら』の誤解を sim で正す"
+  :sim-kinds [:scaling-law :explicit-dynamics :road-load]
+  :topics
+  [{:id :flea-jump :q "ノミが人間サイズだったら本当にビルを飛び越えるのか" :priority 90}
+   {:id :ant-strength :q "アリはなぜ体重の50倍を持てるのか" :priority 85}
+   {:id :cheetah-vs-car :q "チーターと市販車、0-100km/h はどちらが速い？" :priority 75}]}
+
+ :everyday-mechanism
+ {:title "身近な物の仕組み"
+  :description "台所・家電・道具の中の流体・構造・熱を CFD/構造 sim で可視化する"
+  :sim-kinds [:fvm-simple :lbm :linear-static :explicit-dynamics]
+  :topics
+  [{:id :kettle-whistle :q "やかんはなぜ鳴る？（流れの可視化）" :priority 85}
+   {:id :bicycle-balance :q "自転車はなぜ倒れない？" :priority 80}
+   {:id :pressure-cooker :q "圧力鍋はなぜ速い？" :priority 70}]}
+
+ :future-tech
+ {:title "未来技術のシミュレーション"
+  :description "空力・電気化学・構造の reduced-order/CAE で未来技術の成立条件を数値で見せる"
+  :sim-kinds [:reduced-order-aero :rom-fc :road-load :fvm-simple]
+  :topics
+  [{:id :hyperloop-drag :q "真空チューブ列車は本当に速いのか（空力）" :priority 85}
+   {:id :fcev-range :q "水素で東京-大阪を往復できるか（燃料電池 ROM）" :priority 75}
+   {:id :space-elevator :q "宇宙エレベーターのケーブルは何で作る？（構造）" :priority 70}]}
+
+ :three-min-math
+ {:title "3分で理解する数学・物理"
+  :description "短尺。1 本 1 概念、数値実験（num）を 1 つ回して見せる"
+  :sim-kinds [:numeric-experiment]
+  :topics
+  [{:id :pi-monte-carlo :q "円周率を乱数で求める" :priority 85}
+   {:id :pendulum-chaos :q "二重振り子はなぜ予測できないのか" :priority 80}
+   {:id :exponential-growth :q "紙を42回折ると月に届く、は本当か" :priority 75}]}}

@@ -1,0 +1,14 @@
+;; curated 物理定数 — 台本が :constant 出所で参照してよい唯一の数値テーブル。
+;; 追加は人間レビュー必須（:source に出典を必ず書く。出典なしの追加は禁止）。
+;; factcheck gate は claim の値・単位がここと完全一致することを機械強制する。
+{:gravitational-constant   {:quantity 6.67430e-11 :unit "m^3 kg^-1 s^-2" :source "CODATA 2022"}
+ :standard-gravity         {:quantity 9.80665     :unit "m/s^2"          :source "CGPM 1901 (defined)"}
+ :earth-mass               {:quantity 5.9722e24   :unit "kg"             :source "IAU 2015 / NASA Earth Fact Sheet"}
+ :earth-radius-mean        {:quantity 6371.0      :unit "km"             :source "IUGG mean radius"}
+ :moon-mass                {:quantity 7.342e22    :unit "kg"             :source "NASA Moon Fact Sheet"}
+ :moon-radius-mean         {:quantity 1737.4      :unit "km"             :source "NASA Moon Fact Sheet"}
+ :earth-moon-distance-mean {:quantity 384400.0    :unit "km"             :source "NASA Moon Fact Sheet (semi-major axis)"}
+ :speed-of-light           {:quantity 2.99792458e8 :unit "m/s"           :source "SI (defined)"}
+ :water-density-20c        {:quantity 998.2       :unit "kg/m^3"         :source "CRC Handbook, 20°C"}
+ :air-density-sea-level    {:quantity 1.225       :unit "kg/m^3"         :source "ISA sea level, 15°C"}
+ :speed-of-sound-20c       {:quantity 343.0       :unit "m/s"            :source "dry air, 20°C"}}

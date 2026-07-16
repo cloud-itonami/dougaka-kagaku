@@ -1,0 +1,58 @@
+(ns kagaku.scenario-test
+  (:require [clojure.test :refer [deftest is testing]]
+            [kagaku.scenario :as scenario]))
+
+(def valid-episode
+  {:series :moon-approach
+   :question "もし月が今の半分の距離まで近づいたら？"
+   :duration-s 300
+   :claims
+   [{:id :tidal-ratio :text "潮汐力は8倍"
+     :value {:quantity 8.0 :unit "ratio"}
+     :source {:kind :sim :case :moon-tidal :output :tidal-force-ratio}}
+    {:id :current-distance :text "平均距離は約38万4400km"
+     :value {:quantity 384400.0 :unit "km"}
+     :source {:kind :constant :ref :earth-moon-distance-mean}}]
+   :sim-cases
+   [{:id :moon-tidal
+     :solver {:kind :tidal-scaling}
+     :domain {:distance-ratio 0.5}
+     :outputs {:tidal-force-ratio {:unit "ratio"}}}]
+   :beats ["導入" "sim" "まとめ"]})
+
+(deftest valid-episode-passes
+  (is (:valid? (scenario/validate valid-episode))))
+
+(deftest unknown-series-fails
+  (let [{:keys [valid? errors]}
+        (scenario/validate (assoc valid-episode :series :cooking))]
+    (is (not valid?))
+    (is (some #(= :series/unknown (first %)) errors))))
+
+(deftest numeric-claim-without-provenance-fails
+  (testing "数値主張は必ず出所を持つ — LLM の暗算を台本に書かせない"
+    (let [{:keys [valid? errors]}
+          (scenario/validate
+           (update valid-episode :claims conj
+                   {:id :rogue :text "潮位は100mになる"
+                    :value {:quantity 100.0 :unit "m"}}))]
+      (is (not valid?))
+      (is (some #(= :claim/provenance-missing (first %)) errors)))))
+
+(deftest sim-claim-must-reference-existing-case
+  (let [{:keys [valid? errors]}
+        (scenario/validate
+         (update valid-episode :claims conj
+                 {:id :orphan :text "周期は9.7日"
+                  :value {:quantity 9.66 :unit "day"}
+                  :source {:kind :sim :case :no-such-case :output :period}}))]
+    (is (not valid?))
+    (is (some #(= :claim/sim-case-unknown (first %)) errors))))
+
+(deftest duration-out-of-range-fails
+  (is (not (:valid? (scenario/validate (assoc valid-episode :duration-s 30)))))
+  (is (not (:valid? (scenario/validate (assoc valid-episode :duration-s 3600))))))
+
+(deftest sim-claims-filter
+  (is (= [:tidal-ratio]
+         (map :id (scenario/sim-claims (:claims valid-episode))))))
