@@ -1,0 +1,23 @@
+;; 台本 — content/nomi-jump.edn に対応。数値は全て {{claim-id}} placeholder。
+{:scenes
+ [{:location "リビング・拡大鏡の中のノミ"
+   :action "実物大のノミを拡大表示。二人が覗き込む"
+   :lines
+   [{:speaker "right" :text "ノミって、人間サイズになったらビルを飛び越えられるんでしょ？" :emotion "happy"}
+    {:speaker "left" :text "よく聞く話だね。でも答えは、はっきり『できない』" :emotion "normal"}
+    {:speaker "right" :text "えっ、なんで！？" :emotion "surprised"}
+    {:speaker "left" :text "本物のノミは体長 {{flea-body-length}} で、跳躍高は {{flea-jump-height}}。自分の背丈からすると、とんでもない高さだ" :emotion "normal"}]}
+  {:location "シミュレーション空間・スケーリング"
+   :action "ノミを人間サイズへ拡大。断面積と体積の増え方を色分けして可視化"
+   :lines
+   [{:speaker "left" :text "じゃあ実際に大きくしてみよう。人と同じ体長まで、およそ {{size-ratio}} だ" :emotion "normal"}
+    {:speaker "right" :text "おおきい……ちょっとこわい" :emotion "sad"}
+    {:speaker "left" :text "ここが肝心。筋肉の力は断面積で決まるから {{muscle-area-ratio}} 。でも体重は体積だから {{body-mass-ratio}} だ" :emotion "normal"}
+    {:speaker "right" :text "増え方が全然ちがう！" :emotion "surprised"}]}
+  {:location "シミュレーション空間・跳躍の比較"
+   :action "拡大ノミが跳ぼうとして自重に潰れる様子と、実物ノミの跳躍を並置"
+   :lines
+   [{:speaker "left" :text "割り算すると、体重あたりの筋力は {{power-penalty}} も不利になる" :emotion "normal"}
+    {:speaker "right" :text "ビルどころじゃないね……" :emotion "sad"}
+    {:speaker "left" :text "そう。自分の体重を支えるだけで精一杯になる。小さいからこそ跳べるんだ" :emotion "normal"}
+    {:speaker "left" :text "ゾウの脚が太いのも、キリンの首に限界があるのも、同じ相似則の帰結だよ" :emotion "normal"}]}]}

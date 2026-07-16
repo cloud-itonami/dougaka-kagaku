@@ -1,0 +1,53 @@
+;; エピソード spec の実例 2 — 「ノミが人間サイズだったらビルを飛び越える？」
+;; 答えは No。相似則: 筋力は断面積 ∝ L^2、体重は体積 ∝ L^3 で増えるので、
+;; 筋力/体重比は L^-1 で悪化する。この「体長比 850 倍で筋力/体重比が 850 分の1」
+;; を台本に書けるのは sim case :flea-scaling の出力に束縛されているから。
+;;
+;; ⚠ 生物データ（ノミの体長・跳躍高）は物理定数ではないので :citation 出所。
+;; factcheck gate は :verified-by 付きの引用台帳エントリしか通さない —
+;; この episode は**人間の出典確認が済むまで公開経路に乗らない**（設計どおり）。
+{:series :animal-power
+ :question "ノミが人間サイズだったら、本当にビルを飛び越えられるのか？"
+ :duration-s 300
+ :claims
+ [{:id :flea-body-length
+   :text "ノミ（ネコノミ）の体長はおよそ2mm"
+   :value {:quantity 2.0 :unit "mm"}
+   :source {:kind :citation :ref "TODO: ネコノミ Ctenocephalides felis の体長（要出典確認）"}}
+  {:id :flea-jump-height
+   :text "ノミの跳躍高はおよそ20cm"
+   :value {:quantity 20.0 :unit "cm"}
+   :source {:kind :citation :ref "TODO: ノミの跳躍高の一次資料（Bennet-Clark & Lucey 1967 系。要出典確認）"}}
+  {:id :size-ratio
+   :text "ノミを人の体長まで拡大すると850倍になる"
+   :value {:quantity 850.0 :unit "ratio"}
+   :source {:kind :sim :case :flea-scaling :output :length-ratio}}
+  {:id :muscle-area-ratio
+   :text "体長を850倍にすると、筋肉の断面積は72万2500倍にしかならない"
+   :value {:quantity 722500.0 :unit "ratio"}
+   :source {:kind :sim :case :flea-scaling :output :area-ratio}}
+  {:id :body-mass-ratio
+   :text "いっぽう体重は6億1412万5000倍に増える"
+   :value {:quantity 614125000.0 :unit "ratio"}
+   :source {:kind :sim :case :flea-scaling :output :mass-ratio}}
+  {:id :power-penalty
+   :text "その結果、筋力と体重の比は850分の1まで落ちる"
+   :value {:quantity 850.0 :unit "ratio"}
+   :source {:kind :sim :case :flea-scaling :output :strength-to-weight-penalty}}]
+ :sim-cases
+ [{:id :flea-scaling
+   :solver {:kind :scaling-law}
+   ;; 体長比 850 = 人の身長 1.7m ÷ ノミ 2mm。モデル化の前提（等方相似・
+   ;; 同一筋組織・同一材料強度）は human-review の確認事項。
+   :domain {:length-ratio 850.0
+            :note "1.7m / 2mm。等方スケーリング・材料と筋組織は不変と仮定"}
+   :outputs {:length-ratio {:unit "ratio"}
+             :area-ratio {:unit "ratio"}
+             :mass-ratio {:unit "ratio"}
+             :strength-to-weight-penalty {:unit "ratio"}}}]
+ :beats
+ ["導入: 『ノミが人間サイズならビルを飛び越える』という有名な話の紹介"
+  "現実のノミ: 体長と跳躍高（実測値の提示）"
+  "sim: 体長を850倍に — 断面積と体積の増え方の違いを 3D で可視化"
+  "答え: 筋力/体重比が850分の1 → ビルどころか自分の体重を支えるのも苦しい"
+  "一般化: なぜゾウは細い脚で走れないのか（同じ相似則の帰結）"]}

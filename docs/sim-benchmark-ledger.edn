@@ -1,2 +1,3 @@
 #:kagaku.bench{:episode :tsuki-half-distance, :case :moon-tidal, :solver :tidal-scaling, :wall-ms 0, :runtime :nbb, :steps nil, :at "2026-07-16T09:51:07.644Z"}
 #:kagaku.bench{:episode :tsuki-half-distance, :case :moon-orbit, :solver :two-body-orbit, :wall-ms 0, :runtime :nbb, :steps 100000, :at "2026-07-16T09:51:07.644Z"}
+#:kagaku.bench{:episode :nomi-jump, :case :flea-scaling, :solver :scaling-law, :wall-ms 3, :runtime :nbb, :steps nil, :at "2026-07-16T11:02:08.721Z"}

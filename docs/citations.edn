@@ -1,0 +1,6 @@
+;; 引用台帳 — :citation 出所の claim が参照する。
+;; **人間が一次資料を確認してから** :verified-by / :at を付けて登録する。
+;; エントリが無い / :verified-by が無い ref は factcheck gate が reject する
+;; （AI が「それらしい出典」を捏造して埋めることを構造的に防ぐ）。
+;; agent はこのファイルに :verified-by を書き込まない — オーナーのみ。
+{}

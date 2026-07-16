@@ -9,6 +9,7 @@
 (ns run-episode
   (:require [cljs.reader :as reader]
             [clojure.pprint :refer [pprint]]
+            [clojure.string :as str]
             [kagaku.rom :as rom]
             [kagaku.scenario :as scenario]
             [kagaku.script :as script]
@@ -74,6 +75,23 @@
   (println " " id (if (some #{id} const-fails) "FAIL" "OK")
            "<-" (:ref source) (str "(" (:source (get constants (:ref source))) ")")))
 
+;; 4b) 引用出所 — 人間の出典確認待ちを可視化する（失敗ではない。
+;;     docs/citations.edn に :verified-by 付きで載るまで factcheck gate は通らない）
+(def citations
+  (if (fs/existsSync "docs/citations.edn")
+    (reader/read-string (fs/readFileSync "docs/citations.edn" "utf8"))
+    {}))
+(def citation-claims
+  (filter #(= :citation (get-in % [:source :kind])) (:claims episode)))
+(when (seq citation-claims)
+  (println "\n-- citations (人間の出典確認):")
+  (doseq [{:keys [id source]} citation-claims]
+    (let [c (get citations (:ref source))]
+      (println " " id (if (:verified-by c)
+                        (str "VERIFIED by " (:verified-by c) " @" (:at c))
+                        "PENDING — 人間の出典確認待ち")
+               "\n     ref:" (:ref source)))))
+
 ;; 5) 台本（<episode>-script.edn があれば検証 + 展開）
 (def script-path (.replace episode-path ".edn" "-script.edn"))
 (when (fs/existsSync script-path)
@@ -96,6 +114,14 @@
   (fs/appendFileSync "docs/sim-benchmark-ledger.edn"
                      (apply str (map #(str (pr-str %) "\n") stamped))))
 
+(def pending-citations
+  (vec (for [{:keys [id source]} citation-claims
+             :when (not (:verified-by (get citations (:ref source))))]
+         id)))
 (def all-ok? (and (every? :ok? rows) (empty? const-fails)))
-(println "\n== claims verdict:" (if all-ok? "ALL OK" "FAILURES") "(full gate は render 後の facts で kagaku.factcheck/gate)")
+(println "\n== claims verdict:" (if all-ok? "ALL OK (機械検証分)" "FAILURES")
+         (if (seq pending-citations)
+           (str "/ 人間の出典確認待ち: " (str/join ", " (map name pending-citations)))
+           "")
+         "\n   (full gate は render 後の facts で kagaku.factcheck/gate)")
 (when-not all-ok? (js/process.exit 1))

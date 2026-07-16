@@ -72,3 +72,44 @@ render-sim-visual の kami-engine render-IR 変換の最小実装、D1 schema �
 
 **Next**: (b) 2 本目 episode（:animal-power flea-jump、:scaling-law）E2E、
 または (c) render-sim-visual の最小 render-IR 変換。
+
+## Iteration 3 — 2026-07-16
+
+**Build**:
+
+- 2 本目 episode `content/nomi-jump.edn` +台本（:animal-power / :scaling-law、
+  「ノミが人間サイズならビルを飛び越える」の訂正）。E2E 実走: scenario OK /
+  claim-consistency 4 件 OK / script validate OK / bench datom append
+  （台帳 2 → 3 datoms）。
+- `docs/citations.edn`（引用台帳）新設 + runner の citation PENDING 表示。
+  この episode の生物データ（ノミの体長・跳躍高）は物理定数でないので
+  `:citation` 出所にし、**人間の出典確認が済むまで公開経路に乗らない**状態で
+  正しく停止することを実地で確認（設計どおりの hold）。agent は
+  `:verified-by` を書き込まない旨をファイル冒頭に明記。
+- `:scaling-law` に `:length-ratio`（入力エコー）と
+  `:strength-to-weight-penalty`（語り向け逆数表現）出力を追加。
+- tests 43 → 44（82 assertions）green。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 2 本・台本 2 本・rom 4 kinds・bench 3 datoms（全て wall-ms 0 =
+ms 分解能未満、性能シグナルは依然 unknown）。実 LLM 出力での script validate
+reject 率は未計測（LLM 未配線）。
+
+**Learn（今回の実台本で実際に発火した 2 つの実害）**:
+
+- **iteration 2 で「既知の穴」と書いた漢数字の算術が、次の台本で即座に発火した。**
+  「およそ八百五十倍」「体長の百倍も跳ぶ」— どちらも digit 検査を素通りする
+  未検証の算術だった。対処: (a) 体長比は solver の `:length-ratio` エコー出力に
+  束縛して claim 化（domain を変えて台本が古いままなら claim-consistency が
+  検出することをテストで固定）、(b) 派生比（跳躍高÷体長）は語りから削除。
+  → 学び: 「既知の穴」は記録するだけでは塞がらない。次に触るコンテンツで必ず出る。
+- **単位の和訳と語りの不整合**: `{{power-penalty}} 分の一` が「850倍 分の一」と
+  展開され意味が反転していた（unit "ratio"→"倍"）。転記の機械化は数値の正しさは
+  守るが、**語としての正しさは守らない** — placeholder 前後の助詞・語順は
+  human-review の確認対象として残る。
+- 未対処の設計ギャップ: **claim から claim を導く「派生 claim」の出所種別が無い**
+  （跳躍高 20cm ÷ 体長 2mm = 100 のような算術）。今回は語りから削除して回避したが、
+  `:derived {:from [ids] :op ...}` を決定論評価する案が次の候補。
+
+**Next**: (c) render-sim-visual の最小 kami-engine render-IR 変換、
+または `:derived` 出所種別の実装（上記ギャップ）。

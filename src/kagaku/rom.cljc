@@ -58,9 +58,16 @@
     (when-not (and (number? l) (pos? l))
       (throw (ex-info "scaling-law: :length-ratio must be positive"
                       {:domain domain})))
-    {:outputs {:area-ratio {:quantity (* l l) :unit "ratio"}
+    {:outputs {;; 入力のエコー。台本が体長比そのものに言及するとき、この出力に
+               ;; 束縛させれば domain を変えたのに台本の数字が古いままという
+               ;; 不整合を claim-consistency が検出できる。
+               :length-ratio {:quantity l :unit "ratio"}
+               :area-ratio {:quantity (* l l) :unit "ratio"}
                :mass-ratio {:quantity (* l l l) :unit "ratio"}
-               :strength-to-weight-ratio {:quantity (/ 1.0 l) :unit "ratio"}}}))
+               :strength-to-weight-ratio {:quantity (/ 1.0 l) :unit "ratio"}
+               ;; 語り向けの逆数表現（「◯倍の不利」= 筋力/体重比が 1/◯）。
+               ;; strength-to-weight-ratio と同じ物理の別表示。
+               :strength-to-weight-penalty {:quantity l :unit "ratio"}}}))
 
 (defmethod solve :numeric-experiment
   ;; 決定論数値実験。:experiment で分岐（乱数を使う場合も seed 必須の

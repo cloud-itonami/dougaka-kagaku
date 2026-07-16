@@ -1,6 +1,7 @@
 (ns kagaku.rom-test
   (:require [clojure.test :refer [deftest is testing]]
-            [kagaku.rom :as rom]))
+            [kagaku.rom :as rom]
+            [kagaku.simcase]))
 
 (def constants
   {:gravitational-constant {:quantity 6.67430e-11 :unit "m^3 kg^-1 s^-2" :source "CODATA 2022"}
@@ -42,7 +43,26 @@
                                        constants)]
       (is (= 10000.0 (get-in outputs [:area-ratio :quantity])))
       (is (= 1000000.0 (get-in outputs [:mass-ratio :quantity])))
-      (is (= 0.01 (get-in outputs [:strength-to-weight-ratio :quantity]))))))
+      (is (= 0.01 (get-in outputs [:strength-to-weight-ratio :quantity])))
+      (is (= 100.0 (get-in outputs [:strength-to-weight-penalty :quantity])))))
+  (testing ":length-ratio は入力のエコー — 台本が体長比に言及するとき束縛先になり、
+            domain 変更に台本が追随していない不整合を claim-consistency が検出できる"
+    (let [{:keys [outputs]} (rom/solve {:solver {:kind :scaling-law}
+                                        :domain {:length-ratio 850.0}}
+                                       constants)]
+      (is (= 850.0 (get-in outputs [:length-ratio :quantity]))))))
+
+(deftest stale-script-number-detected-via-length-ratio-echo
+  (testing "domain を 850 → 500 に変えたのに claim が 850 のままなら弾かれる"
+    (let [claim {:id :size-ratio :text "850倍に拡大"
+                 :value {:quantity 850.0 :unit "ratio"}
+                 :source {:kind :sim :case :flea-scaling :output :length-ratio}}
+          results {:flea-scaling (rom/solve {:solver {:kind :scaling-law}
+                                             :domain {:length-ratio 500.0}}
+                                            constants)}
+          [row] (kagaku.simcase/claim-consistency [claim] results)]
+      (is (not (:ok? row)))
+      (is (= :value-mismatch (:reason row))))))
 
 (deftest fold-to-moon
   (testing "0.1mm の紙を 42 回折る → 約 44 万 km（月を超える）"
