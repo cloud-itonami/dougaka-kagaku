@@ -661,3 +661,43 @@ scene 対応 series: moon-approach + animal-power + three-min-math = **3/5**。
 
 **Next**: 残る scene 未対応 series（everyday-mechanism / future-tech）、
 full-produce E2E への SVG 出力統合、または 5本目 episode。
+
+## Iteration 17 — 2026-07-17
+
+**Build**:
+
+- 5本目 episode `content/paper-fold-moon.edn` +台本（:three-min-math、
+  「紙を42回折ると月に届く、は本当か」）。**sim + constant + derived の
+  3 出所種別を 1 本で全部使う初の episode**: paper-thickness/fold-count/
+  final-thickness（sim :fold-to-moon）+ moon-distance（constant）+ exceeds-by
+  （derived :ratio [final-thickness moon-distance] = 1.14）。指数増加の直感に
+  反する強さを sim で示す。
+- rom :fold-to-moon に入力エコー出力追加（:initial-thickness-mm / :fold-count）。
+- E2E: 全 claim 検証 OK（sim 3件 / constant 1件 / derived 1件）、derived が
+  「44万km ÷ 38万km = 1.14倍」を再計算一致。full-produce は render-video まで
+  流れて :awaiting-exec（three-min-math scene は pi 専用なので本 episode は
+  scene skip、audit 100%）。
+- produced.edn に :paper-fold-moon 追記。tests 99→99（215→219 assertions、
+  rom echo テスト 4 追加）green。audit 全5episode ALL PASS mean 98%。
+
+**Learn（実台本で発火した実害 1 件）**:
+
+- **digit 検査が 5 行の生数字を捕捉**（「42回」「2倍」「44万キロ」等）。
+  安全網の 4 度目の発火。対処の型が固まってきた: (a) 数値 claim は placeholder
+  化（42回→{{fold-count}}）、(b) 定義的な機構説明の数（折ると「2倍」）は
+  漢数字「二倍」に（これは検証すべき data 値でなく操作の定義なので可）、
+  (c) 数値の相槌の繰り返し（「44万キロ！？」）は定性表現に（「そんなに
+  大きくなるの！？」）。iteration 9 の「漢数字による未検証算術は禁止」との
+  区別: 二倍は fold 操作の定義（増加率そのもの）で算術結果ではないので許容。
+- **5 出所（sim/constant/citation/derived）のうち citation 以外の 3 つを
+  1 episode で同時に使えた**。derived が sim claim と constant claim を跨いで
+  比を取れた（final-thickness は sim、moon-distance は constant、同 km 次元で
+  ratio）— 出所種別が混在しても derived の単位次元チェックが機能する実証。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 5本（tsuki/nomi/pi/ant/paper）。全 stage 揃い（scene 付き）: tsuki/ant/pi
+の3本（paper は three-min-math だが pi 専用 scene なので scene なし）。audit
+mean 98%。実 IO は音声のみ実測。
+
+**Next**: (O) full-produce E2E への SVG 出力統合、(Q) audit preview-renderable
+axis、または everyday-mechanism/future-tech の scene 対応 or 6本目 episode。

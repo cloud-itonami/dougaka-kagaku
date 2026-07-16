@@ -1,0 +1,21 @@
+;; 台本 — content/paper-fold-moon.edn に対応。数値は全て {{claim-id}} placeholder。
+{:scenes
+ [{:location "机の上・一枚の紙"
+   :action "ふつうのコピー用紙を一枚映す"
+   :lines
+   [{:speaker "left" :text "紙をたった {{fold-count}} 回折るだけで、月に届くって知ってた？" :emotion "happy"}
+    {:speaker "right" :text "えー、無理でしょ。紙なんてペラペラだよ" :emotion "normal"}
+    {:speaker "left" :text "この紙の厚さは、たった {{paper-thickness}}。でも折るとどうなるか" :emotion "normal"}]}
+  {:location "シミュレーション空間・折るたびに倍"
+   :action "紙が折れるたびに厚さが2倍に伸びていくアニメーション"
+   :lines
+   [{:speaker "left" :text "折るたびに厚さは二倍になる。これを {{fold-count}} 回くり返す" :emotion "normal"}
+    {:speaker "right" :text "二倍ずつなら、たかが知れてるんじゃ……" :emotion "normal"}
+    {:speaker "left" :text "ところが最後には、厚さはおよそ {{final-thickness}} になる" :emotion "surprised"}
+    {:speaker "right" :text "そんなに大きくなるの！？" :emotion "surprised"}]}
+  {:location "シミュレーション空間・地球から月へ伸びる紙"
+   :action "折った紙の柱が地球から月まで伸びる俯瞰"
+   :lines
+   [{:speaker "left" :text "月までの距離は {{moon-distance}}。折った紙はその {{exceeds-by}}、しっかり届く" :emotion "normal"}
+    {:speaker "right" :text "たった {{fold-count}} 回でこんなに……指数増加ってすごいんだね" :emotion "happy"}
+    {:speaker "left" :text "そう。倍々の増え方は、人間の直感より桁違いに速い。それを体感できる話だよ" :emotion "normal"}]}]}

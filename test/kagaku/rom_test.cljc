@@ -71,7 +71,12 @@
                                                  :thickness-mm 0.1 :folds 42}}
                                        constants)
           km (get-in outputs [:final-thickness-km :quantity])]
-      (is (< 400000.0 km 480000.0)))))
+      (is (< 400000.0 km 480000.0))
+      (testing "入力エコー（paper-fold-moon episode の claim 束縛先）"
+        (is (= 0.1 (get-in outputs [:initial-thickness-mm :quantity])))
+        (is (= "mm" (get-in outputs [:initial-thickness-mm :unit])))
+        (is (= 42.0 (get-in outputs [:fold-count :quantity])))
+        (is (= "count" (get-in outputs [:fold-count :unit])))))))
 
 (deftest pi-monte-carlo-deterministic
   (testing "seed 固定で再現可能（同じ case は常に同じ出力）かつ π に収束"

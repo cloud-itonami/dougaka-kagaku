@@ -78,7 +78,10 @@
     ;; 厚さ t0 の紙を n 回折る → t0 * 2^n
     (let [{:keys [thickness-mm folds]} domain
           thickness-km (* thickness-mm 1.0E-6 (Math/pow 2.0 folds))]
-      {:outputs {:final-thickness-km {:quantity thickness-km :unit "km"}}})
+      {:outputs {:final-thickness-km {:quantity thickness-km :unit "km"}
+                 ;; 入力エコー（台本が「0.1mm」「42回」に言及するときの束縛先）。
+                 :initial-thickness-mm {:quantity (double thickness-mm) :unit "mm"}
+                 :fold-count {:quantity (double folds) :unit "count"}}})
 
     :pi-monte-carlo
     ;; 決定論 LCG（seed 必須）で 1/4 円ヒット率から π を推定。

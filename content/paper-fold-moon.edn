@@ -1,0 +1,41 @@
+;; エピソード spec の実例 5 — 「紙を42回折ると月に届く、は本当か」。
+;; sim（fold-to-moon：厚さ×2^折数）+ constant（月までの距離）+ derived（比）を
+;; すべて使う episode。指数増加の直感に反する強さを sim で示す。
+{:series :three-min-math
+ :question "紙をたった42回折るだけで、本当に月に届くのか？"
+ :duration-s 180
+ :claims
+ [{:id :paper-thickness
+   :text "ふつうの紙の厚さはおよそ0.1mm"
+   :value {:quantity 0.1 :unit "mm"}
+   :source {:kind :sim :case :fold :output :initial-thickness-mm}}
+  {:id :fold-count
+   :text "これを42回、折り重ねる"
+   :value {:quantity 42.0 :unit "count"}
+   :source {:kind :sim :case :fold :output :fold-count}}
+  {:id :final-thickness
+   :text "すると厚さはおよそ44万kmに達する"
+   :value {:quantity 440000.0 :unit "km"}
+   :source {:kind :sim :case :fold :output :final-thickness-km}}
+  {:id :moon-distance
+   :text "月までの平均距離は約38万4400km"
+   :value {:quantity 384400.0 :unit "km"}
+   :source {:kind :constant :ref :earth-moon-distance-mean}}
+  {:id :exceeds-by
+   :text "つまり月までの距離の約1.14倍、確かに届く"
+   :value {:quantity 1.14 :unit "ratio"}
+   :source {:kind :derived :op :ratio :from [:final-thickness :moon-distance]}}]
+ :sim-cases
+ [{:id :fold
+   :solver {:kind :numeric-experiment}
+   :domain {:experiment :fold-to-moon :thickness-mm 0.1 :folds 42}
+   :budget {:steps 42}
+   :outputs {:initial-thickness-mm {:unit "mm"}
+             :fold-count {:unit "count"}
+             :final-thickness-km {:unit "km"}}}]
+ :beats
+ ["導入: 『紙を42回折れば月に届く』— そんなの無理でしょ？ という直感"
+  "仕掛け: 1回折るごとに厚さは2倍。42回なら2の42乗倍"
+  "sim: 0.1mm から始めて折るたびに倍にしていく（指数増加の可視化）"
+  "結果: 42回で約44万km。月までの38万kmを超える"
+  "まとめ: 指数増加は直感より桁違いに速い。だから折り紙で月に届く"]}
