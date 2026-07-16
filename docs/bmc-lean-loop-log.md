@@ -362,3 +362,46 @@ sim スタック性能の本格シグナルにはまだ遠い）。実 IO 未配
 **Next**: (E) scene の animal-power 対応、または実 IO 配線の一歩
 （VOICEVOX 実呼び出し / kami-engine 実 render）、または (H) kagaku.audit
 （episode 横断の self-audit）。
+
+## Iteration 10 — 2026-07-16
+
+**Build**:
+
+- `kagaku.audit` — episode 横断の決定論 self-audit（network-isekai
+  isekai.ux.audit / design-quality.audit の「計測されないメトリクス＝劇場」
+  思想を移植）。7 axes を weighted 集約: spec-valid / script-valid /
+  **sim-unit-declared**（新）/ derived-sound / scene-linked / citations-verified
+  / claim-coverage。各 axis は 0..1 score + 具体的 findings。
+- **sim-unit-declared axis が iteration 9 の学びを spec レベルに前倒し**:
+  :sim claim の unit が sim-case の宣言 output unit と一致するかを検査。
+  iter9 では unit drift を実 run の表示まで気付かなかったが、この axis は
+  spec 時点（run 前）で捕える。
+- `tools/audit.cljs` — content/*.edn 全 episode を 1 コマンド検査する CI runner。
+  1 つでも pass? false なら exit 1。tests 82→89（183 assertions）green。
+- 全 3 episode で実行: tsuki 100% / pi 100% / nomi 90%（citation PENDING を
+  正しく可視化、pass? は落とさない＝人間確認待ちは正常状態）。ALL PASS、
+  mean-score 97%。
+
+**Learn**:
+
+- pass?（公開ブロッカー判定）と score（品質メトリクス）を分離した設計が効いた:
+  citation PENDING は score を下げるが pass? は落とさない。「人間の出典確認待ち」は
+  不正ではなく正常な中間状態、という設計意図（factcheck の human-review hold と
+  同じ）を audit でも一貫させた。
+- audit は既存 validate 群（scenario/script/derived/scene）の再実行 + 新 axis
+  （sim-unit-declared / claim-coverage / scene-linked）の合成。既存の純関数を
+  「横断 fitness function」として束ねられたのは、各 stage を no-IO pure に
+  保ってきた設計の配当。
+- 今回も過去反復の学びが axis 化された（iter2 の raw-digit → script-valid、
+  iter9 の unit drift → sim-unit-declared、iter2 の unspoken claim →
+  claim-coverage）。「学びを記録 → 次で発火 → 機械チェック化」の 3 段が
+  この loop で繰り返し起きている。self-audit はその機械チェックの集約点。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 3本、self-audit mean-score 97%（citation 2件 PENDING が唯一の減点、
+これは人間の出典確認という設計どおりの TODO で不正ではない）。CI で episode
+追加時の回帰が機械保証されるようになった。実 IO 未配線は変わらず。
+
+**Next**: 実 IO 配線の一歩（VOICEVOX localhost:50021 synthesize の実験、
+無ければ未確認と報告）、または (E) scene の animal-power 対応、
+または CI ワークフロー（.github/workflows で audit.cljs + test を回す）。

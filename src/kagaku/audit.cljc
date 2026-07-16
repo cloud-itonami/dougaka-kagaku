@@ -1,0 +1,137 @@
+(ns kagaku.audit
+  "episode 横断の決定論 self-audit — 「計測されないメトリクス＝劇場」を避ける
+   fitness function（network-isekai isekai.ux.audit / design-quality.audit の
+   思想を移植）。LLM/browser 不要、純データ。各 axis は 0..1 score と具体的
+   findings を返し、`audit-episode` が weighted 集約する。CI で content/*.edn を
+   全部 1 コマンド検査（tools/audit.cljs）して、episode 追加時の回帰を防ぐ。
+
+   ここは既存 validate 群（scenario/script/derived/scene）の再実行に加え、
+   **spec レベルの新チェック** を持つ:
+   - sim-unit-declared: :sim claim の unit が sim-case の宣言 output unit と一致か
+     （iteration 9 で実 run 表示まで気付かなかった unit drift を spec 時点で捕える）
+   - scene-sim-linked: scene が sim パラメータと連動しているか
+   - claim-coverage: 全数値 claim が台本で言及されるか"
+  (:require [kagaku.scenario :as scenario]
+            [kagaku.script :as script]
+            [kagaku.derived :as derived]
+            [kagaku.scene :as scene]))
+
+(defn- ok-axis
+  ([id title] {:id id :title title :score 1.0 :findings []})
+  ([id title findings]
+   {:id id :title title
+    :score (if (seq findings) 0.0 1.0)
+    :findings (vec findings)}))
+
+;; --- axes（各 {:id :title :weight :check}。check は (fn [ctx] -> axis-result)） --
+
+(defn- ax-spec-valid [{:keys [episode]}]
+  (let [{:keys [errors]} (scenario/validate episode)]
+    (ok-axis :spec-valid "episode spec 検証（scenario/validate）"
+             (map #(str "spec: " (pr-str %)) errors))))
+
+(defn- ax-script-valid [{:keys [episode script]}]
+  (if-not script
+    (assoc (ok-axis :script-valid "台本検証（script/validate）")
+           :findings ["(台本なし — skip)"] :score 1.0)
+    (let [{:keys [errors]} (script/validate script (:claims episode))]
+      (ok-axis :script-valid "台本検証（script/validate）"
+               (map #(str "script: " (pr-str %)) errors)))))
+
+(defn- ax-sim-unit-declared [{:keys [episode]}]
+  "各 :sim claim の unit が sim-case の宣言 output unit と一致するか（spec 整合）。"
+  (let [cases-by-id (into {} (map (juxt :id identity) (:sim-cases episode)))
+        findings
+        (for [{:keys [id value source]} (:claims episode)
+              :when (= :sim (:kind source))
+              :let [decl (get-in cases-by-id [(:case source) :outputs (:output source) :unit])]
+              :when (not= (:unit value) decl)]
+          (str id ": claim unit " (pr-str (:unit value))
+               " ≠ sim-case " (:case source) "/" (:output source)
+               " 宣言 unit " (pr-str decl)))]
+    (ok-axis :sim-unit-declared "sim claim と sim-case 宣言 unit の整合" findings)))
+
+(defn- ax-derived-sound [{:keys [episode]}]
+  (let [{:keys [failed]} (derived/check (:claims episode))]
+    (ok-axis :derived-sound "派生 claim の再計算一致（derived/check）"
+             (map #(str (:claim %) ": " (name (:reason %))) failed))))
+
+(defn- ax-scene-linked [{:keys [episode]}]
+  "scene が生成される series なら valid かつ sim 連動、未対応 series は skip。"
+  (if-let [snap (scene/scene-for-episode episode)]
+    (let [{:keys [valid? errors]} (scene/validate snap)]
+      (ok-axis :scene-linked "scene の妥当性 + sim 連動"
+               (when-not valid? (map #(str "scene: " (pr-str %)) errors))))
+    (assoc (ok-axis :scene-linked "scene の妥当性 + sim 連動")
+           :findings [(str "(" (:series episode) " は scene 未対応 — skip)")]
+           :score 1.0)))
+
+(defn- ax-citations-verified [{:keys [episode citations] :or {citations {}}}]
+  "（審査の可視化。verified なら 1.0、pending があれば減点し findings に出す。
+   pending は『不正』でなく『人間の確認待ち』— 公開前に潰す TODO。）"
+  (let [cclaims (filter #(= :citation (get-in % [:source :kind])) (:claims episode))
+        pending (for [{:keys [id source]} cclaims
+                      :when (not (:verified-by (get citations (:ref source))))]
+                  (str id " ← " (:ref source)))]
+    (if (empty? cclaims)
+      (ok-axis :citations-verified "引用の人間検証")
+      {:id :citations-verified :title "引用の人間検証"
+       :score (/ (- (count cclaims) (count pending)) (double (count cclaims)))
+       :findings (mapv #(str "PENDING: " %) pending)})))
+
+(defn- ax-claim-coverage [{:keys [episode script]}]
+  "全数値 claim が台本で言及されるか（台本があるとき）。"
+  (if-not script
+    (assoc (ok-axis :claim-coverage "数値 claim の台本被覆")
+           :findings ["(台本なし — skip)"] :score 1.0)
+    (let [spoken (reduce into #{}
+                         (for [sc (:scenes script) ln (:lines sc)]
+                           (script/placeholder-ids (:text ln))))
+          numeric (filter :value (:claims episode))
+          unspoken (remove #(spoken (:id %)) numeric)]
+      {:id :claim-coverage :title "数値 claim の台本被覆"
+       :score (if (empty? numeric) 1.0
+                  (/ (- (count numeric) (count unspoken)) (double (count numeric))))
+       :findings (mapv #(str "未言及: " (:id %)) unspoken)})))
+
+(def axes
+  [{:weight 0.20 :check ax-spec-valid}
+   {:weight 0.15 :check ax-script-valid}
+   {:weight 0.20 :check ax-sim-unit-declared}
+   {:weight 0.15 :check ax-derived-sound}
+   {:weight 0.10 :check ax-scene-linked}
+   {:weight 0.10 :check ax-citations-verified}
+   {:weight 0.10 :check ax-claim-coverage}])
+
+(defn audit-episode
+  "ctx = {:episode spec :script script? :citations map?} を全 axis で検査。
+   {:score 0..1 :axes [axis-result] :findings [str] :pass? bool} を返す。
+   pass? は「公開ブロッカーが無いか」— spec/script/sim-unit/derived/scene/coverage が
+   満点（citations の PENDING は pass? を落とさない＝人間確認待ちは正常状態）。"
+  [ctx]
+  (let [results (mapv (fn [{:keys [weight check]}]
+                        (assoc (check ctx) :weight weight))
+                      axes)
+        total-w (reduce + (map :weight results))
+        score (/ (reduce + (map #(* (:weight %) (:score %)) results)) total-w)
+        blocker-axes (remove #(= :citations-verified (:id %)) results)
+        pass? (every? #(>= (:score %) 1.0) blocker-axes)]
+    {:score score
+     :pass? pass?
+     :axes results
+     :findings (vec (mapcat (fn [{:keys [id findings]}]
+                              (map #(str (name id) ": " %)
+                                   (remove #(re-find #"skip|台本なし" %) findings)))
+                            results))}))
+
+(defn audit-all
+  "episodes = [ctx ...] を一括検査。{:episodes {..} :all-pass? :mean-score} を返す。"
+  [ctxs]
+  (let [rows (mapv (fn [{:keys [episode] :as ctx}]
+                     (assoc (audit-episode ctx)
+                            :episode (:topic-id episode (:question episode))))
+                   ctxs)]
+    {:episodes rows
+     :all-pass? (every? :pass? rows)
+     :mean-score (if (empty? rows) 1.0
+                     (/ (reduce + (map :score rows)) (double (count rows))))}))
