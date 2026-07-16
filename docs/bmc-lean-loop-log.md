@@ -451,3 +451,40 @@ CI と同一の nbb コマンドが緑であることのみ確認済み**。無�
   `nbb tools/audit.cljs` を回す運用にする、のどちらかが要る。follow-up。
 - workflow file 自体は正しい（ローカルで同一コマンド緑を確認済み）ので、
   Actions を有効化すれば動く見込み。yml は残置し、有効化を follow-up とする。
+
+## Iteration 12 — 2026-07-17
+
+**Build**:
+
+- `kagaku.scene` の animal-power 対応。相似則 scene（`scaling-law-scene`）:
+  実物大 vs 拡大版の 2 球体を並置し、拡大版の半径を length-ratio の
+  log 圧縮（`scaled-radius` = base × (1 + log10 r)）でスケール（850 倍を実寸で
+  置くと画面外になるため。概念可視化で数値の正は sim claim 側）。
+- `scene-for-episode` を series ディスパッチ化（case: :moon-approach /
+  :animal-power / 他は nil）。**nomi-jump に実シーンが付いた** — これまで
+  audit の scene-linked axis は nomi で「未対応 skip 満点」だったが、今は
+  実シーン（actual-size / scaled-up / camera / sun、valid）を検証する満点に。
+- tests 89→92（191 assertions）green。audit は全 3 episode ALL PASS を維持
+  （nomi は依然 90%、減点は citation PENDING のみ＝人間確認待ちで正常）。
+
+**Learn**:
+
+- テストで `:asset/inline`（pr-str した EDN 文字列）を read-string して半径を
+  取り出す設計にしかけたが、cljs で `read-string` が cljs.core に無く portable で
+  ないため、半径計算を純関数 `scaled-radius` として露出させてそれを直接テスト。
+  「観測しやすさのために内部を pure 関数として切り出す」のは今回も有効
+  （iter6 の length-ratio エコー、iter8 の compose 分離と同じ設計手）。
+- log 圧縮の選択は正直に「概念可視化」と docstring/BMC に明記した。850 倍を
+  線形に置くと画面外になるので log で潰したが、これは絵の都合であって
+  数値の正ではない — 数値は sim claim（722500倍/614125000倍）が持つ。
+  絵と数字の役割分担（絵＝直感、数字＝sim由来の正）を崩さない。
+- Actions 無効の制約下でローカル完結タスクを選んだのは正解だった
+  （nomi の scene-linked が実シーンで埋まり、audit の被覆が上がった）。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+scene 対応 series: moon-approach + animal-power の 2/5（three-min-math /
+everyday-mechanism / future-tech は未対応で skip、正直に nil）。audit
+mean-score 97% 維持。実 IO 未配線は変わらず。
+
+**Next**: (I) VOICEVOX 実 IO 実験（localhost:50021、無ければ未確認と報告）、
+または scene の他 series 対応、または 4本目 episode（ant-strength）。

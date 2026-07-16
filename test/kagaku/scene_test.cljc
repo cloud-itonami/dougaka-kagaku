@@ -64,3 +64,27 @@
       (is (:valid? (scene/validate snap)))))
   (testing "担当外 series は nil を正直に返す"
     (is (nil? (scene/scene-for-episode {:series :three-min-math :sim-cases []})))))
+
+(deftest scaling-law-scene-valid
+  (testing "相似則 2 球体シーンが kami.scene 語彙で valid"
+    (let [snap (scene/scaling-law-scene {:length-ratio 850.0})]
+      (is (:valid? (scene/validate snap)))
+      (is (= #{"actual-size" "scaled-up" "camera" "sun"}
+             (set (map :kami/name (:snapshot/entities snap))))))))
+
+(deftest scaling-scene-bigger-with-ratio
+  (testing "length-ratio が大きいほど拡大版の球体半径が大きい（sim 連動、log 圧縮）"
+    (is (< (scene/scaled-radius 10.0) (scene/scaled-radius 1000.0)))
+    (is (= scene/base-radius-mm (scene/scaled-radius 1.0)))))
+
+(deftest scene-for-episode-animal-power
+  (testing "animal-power episode の length-ratio から相似則 scene を導く"
+    (let [ep {:series :animal-power
+              :sim-cases [{:id :flea-scaling :solver {:kind :scaling-law}
+                           :domain {:length-ratio 850.0}}]}
+          snap (scene/scene-for-episode ep)]
+      (is (some? snap))
+      (is (:valid? (scene/validate snap)))
+      (is (= 1 (count (filter :camera/active? (:snapshot/entities snap)))))))
+  (testing "length-ratio を持たない animal-power は nil（正直）"
+    (is (nil? (scene/scene-for-episode {:series :animal-power :sim-cases []})))))

@@ -130,13 +130,71 @@
      :snapshot/assets assets
      :snapshot/scene {:scene/name name :scene/env (pr-str {:clear [0.0 0.0 0.02]})}}))
 
+;; --- 相似則シーン（animal-power）------------------------------------------
+;; 「体長 L 倍に拡大すると筋力/体重比が 1/L に落ちる」を、実物大と拡大版の
+;; 2 球体を並べて体感させる。球体半径を length-ratio の対数でスケールする
+;; （850 倍を実寸で置くと画面外になるため log 圧縮。あくまで概念可視化で、
+;; 数値の正は sim claim 側 — scene は sim パラメータ length-ratio に連動する）。
+(def ^:const base-radius-mm 1.0)
+
+(defn scaled-radius
+  "拡大版の球体半径 = base × (1 + log10 r)（log 圧縮 — 850 倍を実寸で置くと
+   画面外になるため。概念可視化で、数値の正は sim claim 側）。"
+  [length-ratio]
+  (* base-radius-mm (+ 1.0 (Math/log10 (max 1.0 length-ratio)))))
+
+(defn scaling-law-scene
+  "実物大 vs 拡大版の 2 球体シーン。opts {:length-ratio r :name str}。
+   拡大版の半径 = scaled-radius、x に間隔を空けて並置。"
+  [{:keys [length-ratio name] :or {length-ratio 1.0 name "scaling-law"}}]
+  (let [big-r (scaled-radius length-ratio)
+        gap (* 3.0 (+ base-radius-mm big-r))
+        small-eid (random-uuid)
+        big-eid (random-uuid)
+        cam-eid (random-uuid)
+        sun-eid (random-uuid)
+        assets [(sphere-asset "mesh/small" base-radius-mm)
+                (sphere-asset "mesh/big" big-r)
+                (material-asset "mat/small" [0.85 0.55 0.20])
+                (material-asset "mat/big" [0.75 0.35 0.25])]
+        entities
+        [{:kami/eid small-eid :kami/name "actual-size"
+          :transform/translation [(- gap) 0.0 0.0]
+          :mesh/asset [:asset/id "mesh/small"]
+          :material/asset [:asset/id "mat/small"]}
+         {:kami/eid big-eid :kami/name "scaled-up"
+          :transform/translation [gap 0.0 0.0]
+          :mesh/asset [:asset/id "mesh/big"]
+          :material/asset [:asset/id "mat/big"]}
+         {:kami/eid cam-eid :kami/name "camera"
+          :transform/translation [0.0 (* gap 0.5) (* gap 2.0)]
+          :camera/active? true
+          :camera/projection :perspective
+          :camera/fov 45.0 :camera/near 0.1 :camera/far 5000.0}
+         {:kami/eid sun-eid :kami/name "sun"
+          :transform/translation [100.0 100.0 100.0]
+          :light/kind :dir
+          :light/color [1.0 0.98 0.92]
+          :light/intensity 1.0}]]
+    {:snapshot/name name
+     :snapshot/entities entities
+     :snapshot/assets assets
+     :snapshot/scene {:scene/name name :scene/env (pr-str {:clear [0.02 0.02 0.03]})}}))
+
 (defn scene-for-episode
-  "episode から scene snapshot を導く。series が :moon-approach で
-   distance-ratio を持つ sim case（tidal-scaling）があればそれを使う。
-   合致する series が無ければ nil（この planner は現状 moon-approach のみ担当。
-   他 series の scene は未実装 — 正直に nil を返す）。"
+  "episode から scene snapshot を導く（series ディスパッチ）。
+     :moon-approach → 地球-月シーン（sim distance-ratio 連動）
+     :animal-power  → 相似則 2 球体シーン（sim length-ratio 連動）
+   担当外 series は nil（正直に未実装を返す — audit は skip 満点で扱う）。"
   [{:keys [series sim-cases] :as _episode}]
-  (when (= :moon-approach series)
+  (case series
+    :moon-approach
     (let [dr (some #(get-in % [:domain :distance-ratio]) sim-cases)]
-      (earth-moon-scene {:distance-ratio (or dr 1.0)
-                         :name "moon-approach"}))))
+      (earth-moon-scene {:distance-ratio (or dr 1.0) :name "moon-approach"}))
+
+    :animal-power
+    (let [lr (some #(get-in % [:domain :length-ratio]) sim-cases)]
+      (when lr
+        (scaling-law-scene {:length-ratio lr :name "animal-power"})))
+
+    nil))
