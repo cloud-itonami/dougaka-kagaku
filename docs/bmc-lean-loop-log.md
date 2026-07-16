@@ -622,3 +622,42 @@ scene、または 5本目 episode（next_topic 推奨: everyday-mechanism kettle
 
 **Next**: 実 WebGPU render の harness を立てる（重い、別途スコープ）、
 (L) three-min-math scene、または 5本目 episode。
+
+## Iteration 16 — 2026-07-17
+
+**Build**:
+
+- `kagaku.scene` の three-min-math 対応。π モンテカルロ点群シーン
+  （`monte-carlo-scene`）: 単位正方形に点を打ち、四分円の内（x²+y²≤1）外で
+  色分け（inside 青 / outside 灰）。**点は rom :pi-monte-carlo と同一の決定論
+  LCG（同 seed → 同じ点配置）で生成**するので、絵と sim が同じ乱数列を共有
+  （数字と絵の出所一致、moon/animal と同じ思想）。ortho カメラ使用。
+- `scene-for-episode` に :three-min-math ディスパッチ（pi-monte-carlo
+  experiment のみ、他 experiment は nil を正直に返す）。
+- pi-monte-carlo episode に実 scene が付き、**audit の scene-linked が
+  90%→100%**（pi は全 stage 揃いの 3 本目に）。try_render で 200 点の
+  SVG（25047 bytes、内外色分け）も出力。
+- tests 96→99（215 assertions）green。audit 全4episode ALL PASS mean 98%。
+
+**Learn（実際に発火した実害 1 件）**:
+
+- **audit の scene-linked が `:camera/ortho-h` を unknown-attr として弾いた**。
+  kagaku.scene の `known-attrs`（kami.scene 語彙の mirror）に `:camera/ortho-w`
+  / `:camera/ortho-h`（kami.scene schema に実在）を写し忘れていた。monte-carlo
+  シーンで初めて ortho カメラを使ったので発火。**self-audit（iter10）が
+  自分の mirror 漏れを機械検出した** — audit を作った配当が別 iteration の
+  バグ検出で返ってきた。mirror に ortho-w/h を追加して緑。
+- 「mirror は authority のサブセット」設計（iter6）の弱点＝写し漏れが、
+  実使用（ortho 初投入）で顕在化。新しい attr を使うたび mirror 追加が要る。
+  authority を deps に引かない zero-dep の代償だが、audit が検出網になる構図。
+- 点群を「小球体多数」で表現したのは kami.scene が点群 primitive を持たない
+  ため（汎用 mesh の範囲で概念表現）。絵は概念（200点）、数値は sim（10万
+  サンプル）と点数を分けた — 絵と数字の役割分担を点数でも守った。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+scene 対応 series: moon-approach + animal-power + three-min-math = **3/5**。
+全 stage 揃い episode: tsuki / ant / pi = 3本。audit mean 98%。実 IO は
+音声のみ実測（画の authoritative WebGPU は未実測、iter15）。
+
+**Next**: 残る scene 未対応 series（everyday-mechanism / future-tech）、
+full-produce E2E への SVG 出力統合、または 5本目 episode。

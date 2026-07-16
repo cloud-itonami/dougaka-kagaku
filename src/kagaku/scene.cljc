@@ -23,6 +23,7 @@
     :transform/parent :transform/translation :transform/rotation :transform/scale
     :mesh/asset :material/asset :material/params :shader/asset
     :camera/fov :camera/near :camera/far :camera/active? :camera/projection
+    :camera/ortho-w :camera/ortho-h
     :light/kind :light/color :light/intensity
     :scene/name :scene/root :scene/env})
 
@@ -181,10 +182,63 @@
      :snapshot/assets assets
      :snapshot/scene {:scene/name name :scene/env (pr-str {:clear [0.02 0.02 0.03]})}}))
 
+;; --- モンテカルロ点群シーン（three-min-math / pi-monte-carlo）--------------
+;; 単位正方形に点を打ち、四分円の内（x²+y²≤1）外で色分け＝π 推定の可視化。
+;; 点は rom :pi-monte-carlo と同じ決定論 LCG（同 seed → 同じ点配置）で生成する
+;; ので、絵と sim が同じ乱数列を共有する（数字と絵の出所一致、他 series と同じ思想）。
+(def ^:const mc-modulus 2147483647.0)
+
+(defn mc-points
+  "seed から n 個の (x y inside?) を決定論生成（rom LCG と同一列）。"
+  [seed n]
+  (loop [i 0 s (double seed) acc []]
+    (if (= i n)
+      acc
+      (let [s1 (mod (* 48271.0 s) mc-modulus)
+            s2 (mod (* 48271.0 s1) mc-modulus)
+            x (/ s1 mc-modulus) y (/ s2 mc-modulus)]
+        (recur (inc i) s2
+               (conj acc [x y (<= (+ (* x x) (* y y)) 1.0)]))))))
+
+(defn monte-carlo-scene
+  "π モンテカルロの点群シーン。opts {:seed :points :name}。
+   点数はシーン表示用に絞る（sim の実 sample 数とは別 — 絵は概念、数値は sim claim）。"
+  [{:keys [seed points name] :or {seed 42 points 200 name "pi-monte-carlo"}}]
+  (let [pts (mc-points seed points)
+        cam-eid (random-uuid)
+        sun-eid (random-uuid)
+        assets [(sphere-asset "mesh/pt" 0.008)
+                (material-asset "mat/inside" [0.20 0.55 0.90])
+                (material-asset "mat/outside" [0.60 0.60 0.60])]
+        point-entities
+        (map-indexed
+         (fn [i [x y inside?]]
+           {:kami/eid (random-uuid)
+            :kami/name (str "pt-" i)
+            :transform/translation [x y 0.0]
+            :mesh/asset [:asset/id "mesh/pt"]
+            :material/asset [:asset/id (if inside? "mat/inside" "mat/outside")]})
+         pts)
+        entities
+        (concat point-entities
+                [{:kami/eid cam-eid :kami/name "camera"
+                  :transform/translation [0.5 0.5 2.0]
+                  :camera/active? true :camera/projection :ortho
+                  :camera/ortho-w 1.2 :camera/ortho-h 1.2
+                  :camera/near 0.1 :camera/far 10.0}
+                 {:kami/eid sun-eid :kami/name "sun"
+                  :transform/translation [1.0 1.0 1.0]
+                  :light/kind :dir :light/color [1.0 1.0 1.0] :light/intensity 1.0}])]
+    {:snapshot/name name
+     :snapshot/entities (vec entities)
+     :snapshot/assets assets
+     :snapshot/scene {:scene/name name :scene/env (pr-str {:clear [0.05 0.05 0.06]})}}))
+
 (defn scene-for-episode
   "episode から scene snapshot を導く（series ディスパッチ）。
-     :moon-approach → 地球-月シーン（sim distance-ratio 連動）
-     :animal-power  → 相似則 2 球体シーン（sim length-ratio 連動）
+     :moon-approach  → 地球-月シーン（sim distance-ratio 連動）
+     :animal-power   → 相似則 2 球体シーン（sim length-ratio 連動）
+     :three-min-math → pi-monte-carlo 点群シーン（sim seed 連動、他 experiment は nil）
    担当外 series は nil（正直に未実装を返す — audit は skip 満点で扱う）。"
   [{:keys [series sim-cases] :as _episode}]
   (case series
@@ -196,5 +250,12 @@
     (let [lr (some #(get-in % [:domain :length-ratio]) sim-cases)]
       (when lr
         (scaling-law-scene {:length-ratio lr :name "animal-power"})))
+
+    :three-min-math
+    (let [pi-case (some #(when (= :pi-monte-carlo (get-in % [:domain :experiment])) %)
+                        sim-cases)]
+      (when pi-case
+        (monte-carlo-scene {:seed (get-in pi-case [:domain :seed] 42)
+                            :name "pi-monte-carlo"})))
 
     nil))

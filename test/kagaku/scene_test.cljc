@@ -88,3 +88,39 @@
       (is (= 1 (count (filter :camera/active? (:snapshot/entities snap)))))))
   (testing "length-ratio を持たない animal-power は nil（正直）"
     (is (nil? (scene/scene-for-episode {:series :animal-power :sim-cases []})))))
+
+(deftest monte-carlo-points-deterministic
+  (testing "同 seed は同じ点列（rom と同一 LCG）＝絵と sim が乱数列を共有"
+    (is (= (scene/mc-points 42 50) (scene/mc-points 42 50)))
+    (is (not= (scene/mc-points 42 50) (scene/mc-points 43 50))))
+  (testing "inside 率が π/4 ≒ 0.785 の近傍（十分な点数で）"
+    (let [pts (scene/mc-points 42 2000)
+          inside (count (filter #(nth % 2) pts))]
+      (is (< 0.74 (/ inside 2000.0) 0.83)))))
+
+(deftest monte-carlo-scene-valid
+  (let [snap (scene/monte-carlo-scene {:seed 42 :points 100})]
+    (is (:valid? (scene/validate snap)))
+    (testing "点 100 + camera + sun"
+      (is (= 102 (count (:snapshot/entities snap)))))
+    (testing "camera は 1 つだけ active（ortho）"
+      (is (= 1 (count (filter :camera/active? (:snapshot/entities snap))))))
+    (testing "内外で material が分かれる"
+      (let [mats (set (keep #(when (:material/asset %)
+                               (second (:material/asset %)))
+                            (:snapshot/entities snap)))]
+        (is (contains? mats "mat/inside"))
+        (is (contains? mats "mat/outside"))))))
+
+(deftest scene-for-episode-three-min-math
+  (testing "pi-monte-carlo episode から点群 scene を導く（seed 連動）"
+    (let [ep {:series :three-min-math
+              :sim-cases [{:id :pi-mc :solver {:kind :numeric-experiment}
+                           :domain {:experiment :pi-monte-carlo :seed 42 :samples 100000}}]}
+          snap (scene/scene-for-episode ep)]
+      (is (some? snap))
+      (is (:valid? (scene/validate snap)))))
+  (testing "pi 以外の three-min-math experiment は nil（正直）"
+    (is (nil? (scene/scene-for-episode
+               {:series :three-min-math
+                :sim-cases [{:domain {:experiment :fold-to-moon}}]})))))
