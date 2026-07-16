@@ -152,3 +152,44 @@ reject 率は未計測（LLM 未配線）。
 
 **Next**: (B) render-sim-visual の最小 kami-engine render-IR 変換、
 または (C) 台本→VOICEVOX synthesize-voice の per-line request plan。
+
+## Iteration 5 — 2026-07-16
+
+**Build**:
+
+- `kagaku.voice` — synthesize-voice stage の per-line VOICEVOX request plan。
+  yukkuri voicevox.cljc の純ロジック（style_id カタログ / emotion→style /
+  synthesize-plan / クレジット生成）を移植し kagaku 向けに調整:
+  入力は**展開済み台本**（placeholder 転記後）、話者は left=四国めたん(2)/
+  right=ずんだもん(3)、語り口は通常速度（ゆっくり実況ではない）。
+- **VOICEVOX 商用クレジットを plan から機械生成**（`credit-string`）。
+  factcheck の metadata チェック（description に 'VOICEVOX:' 必須）を満たす
+  文字列が台本の話者構成から自動で出ることを実地確認 — クレジット取りこぼしを
+  構造で防ぐ。
+- pipeline `:synthesize-voice` stage に plan 生成を配線（:voice-plans /
+  :voice-credits を state に積む）。runner に voice plan + クレジット表示。
+- tests 55 → 61（126 assertions）green。E2E（tsuki）: 9 行すべてに plan、
+  クレジット "VOICEVOX:四国めたん / VOICEVOX:ずんだもん" 生成、それが
+  check-metadata を true にすることを確認。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+パイプライン被覆: compose→sim→script→factcheck→**voice(plan)** まで純データで
+到達。実 IO（VOICEVOX /audio_query→/synthesis の 2 段 POST、または
+murakumo /v1/audio/speech）は未配線 — 実音声の品質は unknown。
+
+**Learn**:
+
+- 今回は既存資産（yukkuri voicevox.cljc）の移植で、自分のバグ発火なし
+  （前 2 反復は各 1 バグ）。移植元が pure logic として既に分離されていたのが
+  効いた — yukkuri 側の「IO なし純ロジックを別 ns に隔離」設計の再利用価値。
+- クレジットを「plan から生成 → factcheck が description で要求」の 2 点で
+  閉じたことで、話者を足しても（例: 補助ナレーションに別話者）クレジットが
+  自動追随する。metadata チェックが機械強制なので、人手のクレジット記入漏れ
+  という事故クラスが消えた。
+- 未配線の残り: 実 VOICEVOX 呼び出し / render-sim-visual（kami-engine
+  render-IR）/ compose の topic 選定 / D1 永続化。次動画の E2E に最も近いのは
+  render-sim-visual（sim 結果を絵にする経路）。
+
+**Next**: (B) render-sim-visual の最小 kami-engine render-IR 変換
+（kami-engine* / kami-scene-contracts の EDN 形式を先に調査）、
+または (D) compose stage の topic 選定（yukkuri topics.cljc priorityScore 移植）。

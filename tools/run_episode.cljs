@@ -14,6 +14,7 @@
             [kagaku.rom :as rom]
             [kagaku.scenario :as scenario]
             [kagaku.script :as script]
+            [kagaku.voice :as voice]
             [kagaku.simcase :as simcase]
             ["fs" :as fs]))
 
@@ -105,16 +106,21 @@
                         "PENDING — 人間の出典確認待ち")
                "\n     ref:" (:ref source)))))
 
-;; 5) 台本（<episode>-script.edn があれば検証 + 展開）
+;; 5) 台本（<episode>-script.edn があれば検証 + 展開 + 音声 plan）
 (def script-path (.replace episode-path ".edn" "-script.edn"))
 (when (fs/existsSync script-path)
   (let [sc (reader/read-string (fs/readFileSync script-path "utf8"))
         {:keys [valid? errors]} (script/validate sc (:claims episode))]
     (println "\n-- script/validate:" script-path (if valid? "OK" "FAIL"))
     (if valid?
-      (doseq [scene (:scenes (script/expand sc (:claims episode)))
-              line (:lines scene)]
-        (println "   " (:speaker line) "|" (:text line)))
+      (let [expanded (script/expand sc (:claims episode))
+            plans (voice/plan-script expanded)]
+        (doseq [scene (:scenes expanded) line (:lines scene)]
+          (println "   " (:speaker line) "|" (:text line)))
+        (println "\n-- voice plan (VOICEVOX):" (count plans) "lines,"
+                 (count (filter :ok plans)) "ok")
+        (println "    speakers:" (str/join ", " (voice/speakers-used plans)))
+        (println "    credit:" (voice/credit-string plans)))
       (do (pprint errors) (js/process.exit 1)))))
 
 ;; 6) bench 台帳

@@ -6,6 +6,7 @@
    kami-engine headless render / renderer-mac / YouTube client）が担う。"
   (:require [kagaku.scenario :as scenario]
             [kagaku.script :as script]
+            [kagaku.voice :as voice]
             [kagaku.simcase :as simcase]
             [kagaku.factcheck :as factcheck]))
 
@@ -69,6 +70,17 @@
         :publish (assoc state :stage (next-stage stage) :approved verdict)
         :held (assoc state :status :held :reason :awaiting-human-review)
         (assoc state :status :rejected :failed (:failed verdict))))
+
+    :synthesize-voice
+    ;; 展開済み台本があれば per-line VOICEVOX plan を積む（IO は :exec）。
+    (if-let [sc (:script state)]
+      (let [expanded (script/expand sc (get-in state [:episode :claims]))
+            plans (voice/plan-script expanded)]
+        (assoc state
+               :stage (next-stage stage)
+               :voice-plans plans
+               :voice-credits (voice/credit-string plans)))
+      (assoc state :stage (next-stage stage)))
 
     :audit
     (assoc state :status :done)
