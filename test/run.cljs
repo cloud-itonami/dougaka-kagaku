@@ -4,10 +4,11 @@
   (:require [clojure.test :as t]
             [kagaku.scenario-test]
             [kagaku.simcase-test]
-            [kagaku.factcheck-test]))
+            [kagaku.factcheck-test]
+            [kagaku.rom-test]))
 
 (defmethod t/report [:cljs.test/default :end-run-tests] [m]
   (when-not (t/successful? m)
     (set! (.-exitCode js/process) 1)))
 
-(t/run-tests 'kagaku.scenario-test 'kagaku.simcase-test 'kagaku.factcheck-test)
+(t/run-tests 'kagaku.scenario-test 'kagaku.simcase-test 'kagaku.factcheck-test 'kagaku.rom-test)

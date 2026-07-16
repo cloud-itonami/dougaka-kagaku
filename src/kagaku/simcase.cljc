@@ -89,7 +89,7 @@
            :expected value :actual actual}
 
           :else
-          {:claim id :ok? true :actual actual}))))))
+          {:claim id :ok? true :expected value :actual actual}))))))
 
 (defn bench-datoms
   "実行結果の :bench 計測を append-only 台帳（docs/sim-benchmark-ledger.edn）
