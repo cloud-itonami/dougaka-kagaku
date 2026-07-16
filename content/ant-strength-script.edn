@@ -1,0 +1,20 @@
+;; 台本 — content/ant-strength.edn に対応。数値は全て {{claim-id}} placeholder。
+{:scenes
+ [{:location "地面・アリの行列"
+   :action "アリが自分より大きな葉やパンくずを運ぶ様子を拡大表示"
+   :lines
+   [{:speaker "right" :text "アリって、自分よりずっと大きい物を運ぶよね" :emotion "happy"}
+    {:speaker "left" :text "人間で言えば、車を持ち上げて歩くようなものだ" :emotion "normal"}
+    {:speaker "right" :text "そんなに！？ アリってそんなに力持ちなの？" :emotion "surprised"}]}
+  {:location "シミュレーション空間・拡大"
+   :action "アリを人間サイズへ拡大。断面積と体積の増え方を色分け表示"
+   :lines
+   [{:speaker "left" :text "確かめよう。アリを人間の大きさ、およそ {{size-up}} に拡大してみる" :emotion "normal"}
+    {:speaker "left" :text "筋力のもとになる断面積は {{area-up}} にしか増えない。でも体重は {{mass-up}} だ" :emotion "normal"}
+    {:speaker "right" :text "体重の増え方だけ、けた違いに大きい！" :emotion "surprised"}]}
+  {:location "シミュレーション空間・拡大アリが潰れる"
+   :action "人間サイズのアリが自重を支えきれず脚が曲がる様子"
+   :lines
+   [{:speaker "left" :text "だから拡大したアリは、体重あたりの筋力が {{power-penalty}} も不利になる。もう怪力じゃない" :emotion "normal"}
+    {:speaker "right" :text "大きくすると弱くなるんだ……" :emotion "sad"}
+    {:speaker "left" :text "逆に言えば、小さいアリは体重あたりの力がけた違いに強い。だから自分の何十倍もの荷物を運べるんだ" :emotion "happy"}]}]}

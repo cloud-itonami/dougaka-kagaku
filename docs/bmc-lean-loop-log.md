@@ -531,3 +531,44 @@ mean-score 97% 維持。実 IO 未配線は変わらず。
 **Next**: (L) scene の three-min-math 対応、(K) 4本目 episode ant-strength、
 または kami-engine 実 render の実験（scene snapshot → 実画像、engine の
 headless render 経路を調査）。
+
+## Iteration 14 — 2026-07-17
+
+**Build**:
+
+- 4本目 episode `content/ant-strength.edn` +台本（:animal-power、
+  「アリはなぜ体重の何十倍も運べるのか」）。next_topic の機械選定
+  （iter8）が推奨した topic を実際に作った＝選定と制作が繋がった。
+- **全 claim が既存 rom :scaling-law 出力で固まる**（length-ratio 200 =
+  アリを人サイズに拡大）: size-up 200倍 / area-up 4万倍 / mass-up 800万倍 /
+  power-penalty 200倍。nomi-jump（拡大フレーミング）と同型で全数値が「倍」
+  表示で正しく出る。
+- **通説「体重の50倍」は :citation にも sim にも置かず定性表現「何十倍」に留めた**
+  （断面積 L^2 と体積 L^3 の増え方の差から「小さいほど相対的に強い」を sim で
+  示す構成。誠実さの設計判断）。nomi が :citation PENDING を持つのと対照的に、
+  ant は生物データを数値 claim にしないので citation ゼロ＝audit 100%。
+- animal-power scene（iter12）が付き、full-produce E2E が render-video まで
+  流れて :awaiting-exec（scene animal-power valid / voice 9行 / provenance green）。
+- produced.edn に :ant-strength 追記。tests 92 green（episode 追加のみ、lib 不変）。
+  audit 全4episode ALL PASS、**mean-score 97%→98%**（ant 100% が押し上げ）。
+
+**Learn**:
+
+- **全 stage 揃いの episode が 2 本になり（tsuki / ant）、full-produce の
+  再現性が確認できた**。scene/voice/audit を持つ series（moon-approach /
+  animal-power）では episode 追加が「spec + 台本を書くだけ」で全 stage 緑まで
+  到達する — 部品が揃った series での episode 量産コストが低いことを実証。
+- next_topic の機械選定（priorityScore + rotation）が実際の制作対象と一致した。
+  「次に何を作るか」の機械化（iter8）→「実際に作る」（iter14）が一周した。
+- 誠実さの設計反復: nomi は生物データを :citation にして PENDING で正しく
+  ブロックしたが、ant は「相似則の帰結」に振ることで生物データの数値化を回避し
+  citation ゼロにできた。**同じジャンルでも構成次第で人間検証依存を減らせる**
+  （sim で示せる部分を増やす）— これはチャンネルの無人運転しやすさに直結。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 4本（tsuki/nomi/pi/ant、うち tsuki/ant が全 stage 揃い）。audit
+mean 98%。実 IO は音声のみ実測（iter13）、他モダリティ未実測。
+
+**Next**: (M) kami-engine 実 render 実験（scene→実画像）、(L) three-min-math
+scene、または 5本目 episode（next_topic 推奨: everyday-mechanism kettle-whistle
+だが nagare :fvm-simple は rom 非対応で :exec 委譲 — claims の固め方に工夫要）。

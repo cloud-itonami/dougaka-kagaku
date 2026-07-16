@@ -1,0 +1,42 @@
+;; エピソード spec の実例 4 — 「アリはなぜ体重の何十倍も持てるのか」。
+;; nomi-jump（ノミ拡大）と対の相似則ネタ。全 claim は既存 rom :scaling-law の
+;; 出力で固める（length-ratio 200 = アリを人間サイズに拡大）。
+;; 「体重の50倍」という通説の数値は :citation にも sim にも置かない —
+;; 断面積 ∝ L^2 と体積 ∝ L^3 の増え方の差から「小さいほど相対的に強い」を
+;; sim で示し、具体の倍率は『何十倍』と定性表現に留める（誠実さ）。
+{:series :animal-power
+ :question "アリはどうして自分の体重の何十倍もの荷物を運べるのか？"
+ :duration-s 300
+ :claims
+ [{:id :size-up
+   :text "アリを人間の大きさ、およそ200倍に拡大してみる"
+   :value {:quantity 200.0 :unit "ratio"}
+   :source {:kind :sim :case :ant-scaling :output :length-ratio}}
+  {:id :area-up
+   :text "筋力のもとになる断面積は4万倍にしか増えない"
+   :value {:quantity 40000.0 :unit "ratio"}
+   :source {:kind :sim :case :ant-scaling :output :area-ratio}}
+  {:id :mass-up
+   :text "でも体重は800万倍にもふくれあがる"
+   :value {:quantity 8000000.0 :unit "ratio"}
+   :source {:kind :sim :case :ant-scaling :output :mass-ratio}}
+  {:id :power-penalty
+   :text "その結果、体重あたりの筋力は200倍も不利になる"
+   :value {:quantity 200.0 :unit "ratio"}
+   :source {:kind :sim :case :ant-scaling :output :strength-to-weight-penalty}}]
+ :sim-cases
+ [{:id :ant-scaling
+   :solver {:kind :scaling-law}
+   ;; 体長比 200 = 人 1.7m ÷ アリ 8.5mm 程度。等方相似・材料と筋組織は不変と仮定。
+   :domain {:length-ratio 200.0
+            :note "アリを人サイズに拡大。逆に読めば実物アリは相対的に 200 倍強い"}
+   :outputs {:length-ratio {:unit "ratio"}
+             :area-ratio {:unit "ratio"}
+             :mass-ratio {:unit "ratio"}
+             :strength-to-weight-penalty {:unit "ratio"}}}]
+ :beats
+ ["導入: アリが自分より大きな荷物を運ぶ映像。『人間なら車を持ち上げる怪力』"
+  "拡大: アリを人間サイズに拡大したら怪力のままか？ を sim で試す"
+  "sim: 断面積（筋力）は L^2、体重は L^3。増え方の差を 3D で可視化"
+  "答え: 拡大アリは体重あたり200倍不利 → 実物アリは逆に相対的に桁違いに強い"
+  "まとめ: 『小さいほど相対的に力持ち』。だから何十倍もの荷物を運べる"]}
