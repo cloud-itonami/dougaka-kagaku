@@ -234,11 +234,61 @@
      :snapshot/assets assets
      :snapshot/scene {:scene/name name :scene/env (pr-str {:clear [0.05 0.05 0.06]})}}))
 
+;; --- ハイパーループ・チューブシーン（future-tech）--------------------------
+;; チューブ（x 軸に並ぶマーカー球列）の中を列車球が進み、目的地球へ向かう。
+;; 目的地までの距離を sim speed（速いほど遠くへ到達できる）に連動させる。
+;; 数値の正は sim claim（抗力・削減比）が持ち、scene は「チューブを走る」直感。
+(defn hyperloop-scene
+  "opts {:speed-mps s :name}。目的地 x = speed-mps を scene 単位に圧縮（/10）。"
+  [{:keys [speed-mps name] :or {speed-mps 277.78 name "hyperloop"}}]
+  (let [dist (/ speed-mps 10.0)                 ; scene 単位（~28）
+        n-markers 15
+        train-eid (random-uuid)
+        dest-eid (random-uuid)
+        cam-eid (random-uuid)
+        sun-eid (random-uuid)
+        assets [(sphere-asset "mesh/marker" 0.25)
+                (sphere-asset "mesh/train" 1.0)
+                (sphere-asset "mesh/dest" 1.3)
+                (material-asset "mat/marker" [0.45 0.7 0.85])
+                (material-asset "mat/train" [0.85 0.25 0.2])
+                (material-asset "mat/dest" [0.3 0.8 0.35])]
+        markers
+        (for [i (range (inc n-markers))]
+          {:kami/eid (random-uuid)
+           :kami/name (str "tube-" i)
+           :transform/translation [(* dist (/ i (double n-markers))) 0.0 0.0]
+           :mesh/asset [:asset/id "mesh/marker"]
+           :material/asset [:asset/id "mat/marker"]})
+        entities
+        (concat
+         markers
+         [{:kami/eid train-eid :kami/name "train"
+           :transform/translation [(* dist 0.3) 0.0 0.0]  ; チューブの途中
+           :mesh/asset [:asset/id "mesh/train"]
+           :material/asset [:asset/id "mat/train"]}
+          {:kami/eid dest-eid :kami/name "destination"
+           :transform/translation [dist 0.0 0.0]
+           :mesh/asset [:asset/id "mesh/dest"]
+           :material/asset [:asset/id "mat/dest"]}
+          {:kami/eid cam-eid :kami/name "camera"
+           :transform/translation [(* dist 0.5) (* dist 0.35) (* dist 0.8)]
+           :camera/active? true :camera/projection :perspective
+           :camera/fov 45.0 :camera/near 0.1 :camera/far 5000.0}
+          {:kami/eid sun-eid :kami/name "sun"
+           :transform/translation [dist dist dist]
+           :light/kind :dir :light/color [1.0 0.98 0.95] :light/intensity 1.0}])]
+    {:snapshot/name name
+     :snapshot/entities (vec entities)
+     :snapshot/assets assets
+     :snapshot/scene {:scene/name name :scene/env (pr-str {:clear [0.03 0.03 0.06]})}}))
+
 (defn scene-for-episode
   "episode から scene snapshot を導く（series ディスパッチ）。
      :moon-approach  → 地球-月シーン（sim distance-ratio 連動）
      :animal-power   → 相似則 2 球体シーン（sim length-ratio 連動）
      :three-min-math → pi-monte-carlo 点群シーン（sim seed 連動、他 experiment は nil）
+     :future-tech    → ハイパーループ・チューブシーン（sim speed-mps 連動）
    担当外 series は nil（正直に未実装を返す — audit は skip 満点で扱う）。"
   [{:keys [series sim-cases] :as _episode}]
   (case series
@@ -257,5 +307,10 @@
       (when pi-case
         (monte-carlo-scene {:seed (get-in pi-case [:domain :seed] 42)
                             :name "pi-monte-carlo"})))
+
+    :future-tech
+    (let [spd (some #(get-in % [:domain :speed-mps]) sim-cases)]
+      (when spd
+        (hyperloop-scene {:speed-mps spd :name "future-tech"})))
 
     nil))

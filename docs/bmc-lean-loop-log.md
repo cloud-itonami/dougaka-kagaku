@@ -854,3 +854,38 @@ episode 7本。series カバレッジ 5/5（sim 直解 4: moon/animal/three-min/
 
 **Next**: 全 series カバー達成。次は深さ方向（各 series の 2 本目、scene 拡充、
 実 IO の 2 モダリティ目 kami render harness）または cadence 運用設計。
+
+## Iteration 22 — 2026-07-17
+
+**Build**:
+
+- `kagaku.scene` の future-tech 対応。ハイパーループ・チューブシーン
+  （`hyperloop-scene`）: x 軸に並ぶマーカー球列（チューブ）+ 列車球 + 目的地球。
+  **目的地までの距離を sim speed-mps に連動**（速いほど遠くへ、/10 で scene 単位に
+  圧縮）。数値の正は sim claim（抗力・1000×削減）が持ち、scene は「チューブを走る」
+  直感を担当。
+- `scene-for-episode` に :future-tech ディスパッチ（sim-case の speed-mps から）。
+  **hyperloop-drag episode が全 stage 揃いに**（scene future-tech valid、
+  full-produce E2E で human-review SVG 自動出力、audit scene-linked +
+  preview-renderable 満点 → 100%）。SVG は 18 円（16 tube markers + 列車 + 目的地）。
+- tests 101→104（236 assertions）green。audit 全7episode ALL PASS mean 99%。
+  **scene 対応 4/5 series**（moon/animal/three-min/future、everyday-mechanism は
+  :exec 委譲で scene 無し）。全 stage 揃い episode: tsuki/ant/pi/hyperloop の4本。
+
+**Learn**:
+
+- iter19 の human-review SVG 統合 + iter18 の preview-renderable axis が、
+  future-tech scene を足しただけで hyperloop にそのまま効いた。**scene を 1 つ
+  足すと（human-review SVG 出力・audit の 2 axis・full-produce の締め）が
+  自動で付いてくる**構造ができている — 各機能が scene-for-episode という
+  1 点で繋がっているので、series 追加のコストが逓減する。
+- 「絵は概念・数字は sim」の役割分担を future-tech でも維持: 目的地距離は
+  speed 連動（絵の直感）だが、削減比 1000× や抗力 66kN は sim claim（数値の正）。
+  scene の距離スケール（/10 圧縮）は絵の都合で数値ではない、と設計に内包。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 7本、scene 4/5 series、全 stage 揃い 4本（tsuki/ant/pi/hyperloop）。
+audit mean 99%。実 IO は音声のみ実測。
+
+**Next**: cadence 運用（daily_draft スクリプト）、各 series 2本目で深さ、
+または 実 IO の 2 モダリティ目（kami render harness、重い）。

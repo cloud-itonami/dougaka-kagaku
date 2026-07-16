@@ -124,3 +124,33 @@
     (is (nil? (scene/scene-for-episode
                {:series :three-min-math
                 :sim-cases [{:domain {:experiment :fold-to-moon}}]})))))
+
+(deftest hyperloop-scene-valid
+  (let [snap (scene/hyperloop-scene {:speed-mps 277.78})]
+    (is (:valid? (scene/validate snap)))
+    (testing "train / destination / camera / sun + tube markers"
+      (let [names (set (map :kami/name (:snapshot/entities snap)))]
+        (is (contains? names "train"))
+        (is (contains? names "destination"))
+        (is (contains? names "tube-0"))))
+    (testing "camera 1 つだけ active"
+      (is (= 1 (count (filter :camera/active? (:snapshot/entities snap))))))))
+
+(deftest hyperloop-dest-scales-with-speed
+  (testing "目的地の x は sim speed に連動（速いほど遠い）"
+    (let [dest-x (fn [s] (->> (:snapshot/entities (scene/hyperloop-scene {:speed-mps s}))
+                              (filter #(= "destination" (:kami/name %))) first
+                              :transform/translation first))]
+      (is (< (dest-x 100.0) (dest-x 300.0)))
+      (is (< 27.0 (dest-x 277.78) 28.5)))))
+
+(deftest scene-for-episode-future-tech
+  (testing "future-tech episode の speed-mps から hyperloop scene を導く"
+    (let [ep {:series :future-tech
+              :sim-cases [{:id :open :solver {:kind :reduced-order-aero}
+                           :domain {:speed-mps 277.78 :cd 0.35 :frontal-area-m2 4.0}}]}
+          snap (scene/scene-for-episode ep)]
+      (is (some? snap))
+      (is (:valid? (scene/validate snap)))))
+  (testing "speed-mps を持たない future-tech は nil（正直）"
+    (is (nil? (scene/scene-for-episode {:series :future-tech :sim-cases []})))))
