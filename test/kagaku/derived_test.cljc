@@ -1,0 +1,72 @@
+(ns kagaku.derived-test
+  (:require [clojure.test :refer [deftest is testing]]
+            [kagaku.units :as units]
+            [kagaku.derived :as derived]))
+
+(deftest units-convert
+  (is (= 0.02 (units/to-base {:quantity 2.0 :unit "cm"})))
+  (is (units/same-dimension? "cm" "mm"))
+  (is (not (units/same-dimension? "cm" "s")))
+  (is (nil? (units/convert {:quantity 1.0 :unit "cm"} "s")))
+  (is (= {:quantity 200.0 :unit "mm"}
+         (units/convert {:quantity 20.0 :unit "cm"} "mm"))))
+
+(def claims-by-id
+  {:flea-jump {:id :flea-jump :value {:quantity 20.0 :unit "cm"}}
+   :flea-body {:id :flea-body :value {:quantity 2.0 :unit "mm"}}
+   :a {:id :a :value {:quantity 3.0 :unit "ratio"}}
+   :b {:id :b :value {:quantity 4.0 :unit "ratio"}}
+   :d1 {:id :d1 :value {:quantity 100.0 :unit "km"}}
+   :d2 {:id :d2 :value {:quantity 50.0 :unit "km"}}})
+
+(deftest ratio-across-units
+  (testing "20cm ÷ 2mm = 100（科学解説の花形『体長の何倍跳ぶか』）"
+    (let [r (derived/evaluate {:op :ratio :from [:flea-jump :flea-body]} claims-by-id)]
+      (is (:ok? r))
+      (is (= "ratio" (get-in r [:value :unit])))
+      (is (< 99.99 (get-in r [:value :quantity]) 100.01)))))
+
+(deftest ratio-rejects-different-dimension
+  (let [c (assoc-in claims-by-id [:flea-body :value] {:quantity 2.0 :unit "s"})
+        r (derived/evaluate {:op :ratio :from [:flea-jump :flea-body]} c)]
+    (is (not (:ok? r)))))
+
+(deftest sum-and-diff
+  (is (= 150.0 (get-in (derived/evaluate {:op :sum :from [:d1 :d2]} claims-by-id)
+                       [:value :quantity])))
+  (is (= 50.0 (get-in (derived/evaluate {:op :diff :from [:d1 :d2]} claims-by-id)
+                      [:value :quantity]))))
+
+(deftest product-dimensionless
+  (is (= 12.0 (get-in (derived/evaluate {:op :product :from [:a :b]} claims-by-id)
+                      [:value :quantity]))))
+
+(deftest scale-by-constant
+  (let [r (derived/evaluate {:op :scale :from [:d1] :by 3.0} claims-by-id)]
+    (is (= {:quantity 300.0 :unit "km"} (:value r)))))
+
+(deftest missing-from-claim
+  (is (= :from-claim-missing
+         (:error (derived/evaluate {:op :ratio :from [:nope :d1]} claims-by-id)))))
+
+(deftest check-episode-claims
+  (testing "宣言値が計算値と一致すれば ok"
+    (let [claims [{:id :flea-jump :value {:quantity 20.0 :unit "cm"}
+                   :source {:kind :citation :ref "x"}}
+                  {:id :flea-body :value {:quantity 2.0 :unit "mm"}
+                   :source {:kind :citation :ref "y"}}
+                  {:id :ratio :value {:quantity 100.0 :unit "ratio"}
+                   :source {:kind :derived :op :ratio
+                            :from [:flea-jump :flea-body]}}]]
+      (is (:ok? (derived/check claims)))))
+  (testing "宣言値が計算値とずれていたら failed（LLM の派生算術ミスを弾く）"
+    (let [claims [{:id :flea-jump :value {:quantity 20.0 :unit "cm"}
+                   :source {:kind :citation :ref "x"}}
+                  {:id :flea-body :value {:quantity 2.0 :unit "mm"}
+                   :source {:kind :citation :ref "y"}}
+                  {:id :ratio :value {:quantity 50.0 :unit "ratio"}  ; 誤り
+                   :source {:kind :derived :op :ratio
+                            :from [:flea-jump :flea-body]}}]
+          {:keys [ok? failed]} (derived/check claims)]
+      (is (not ok?))
+      (is (= :ratio (:claim (first failed)))))))

@@ -113,3 +113,42 @@ reject 率は未計測（LLM 未配線）。
 
 **Next**: (c) render-sim-visual の最小 kami-engine render-IR 変換、
 または `:derived` 出所種別の実装（上記ギャップ）。
+
+## Iteration 4 — 2026-07-16
+
+**Build**:
+
+- `:derived` 出所種別を実装（iteration 3 で特定した未対処ギャップ）。
+  claim から claim を導く算術を LLM でなく決定論再計算する経路:
+  - `kagaku.units` — 単位の次元テーブル + 換算（mm/cm/m/km, s/min/h/day/year,
+    g/kg, m/s・km/h, N, ratio）。既知単位のみ、未知は nil で reject。
+  - `kagaku.derived` — `:op` = :ratio | :sum | :diff | :product | :scale の
+    決定論評価 + 宣言値との ±2% 照合。
+  - scenario/validate に derived の malformed / from-unknown / self-reference
+    検証を追加、factcheck に check-derived を配線、runner に再計算表示。
+- nomi-jump に派生 claim `:jump-body-lengths`（跳躍高 20cm ÷ 体長 2mm = 100倍）を
+  復活。iteration 3 で「語りから削除して回避」した科学解説の花形の数字が、
+  今度は sim/citation の下流の派生値として**機械検証つきで**台本に戻った。
+- tests 44 → 55（104 assertions）green。E2E: 派生再計算 OK、台本に「体長の
+  100倍も跳ぶ」が展開。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+出所種別 4 種（sim/constant/citation/derived）全て機械検証つき。bench 台帳
+5 datoms（nomi-jump は 2 ラン分 — append-only の別サンプル。wall-ms は
+今回初めて 0 でない値 3〜7ms を記録したが、依然 scaling-law の軽演算で
+性能シグナルとしては弱い。重い solver の実行は未配線で unknown のまま）。
+
+**Learn**:
+
+- iteration 3 の「派生 claim の出所が無い」ギャップは、実コンテンツ（nomi-jump）が
+  実際に詰まっていた実害だった。塞いだ結果、跳躍高÷体長のような**単位をまたぐ
+  派生値**が LLM 非算術のまま出せるようになった（20cm と 2mm を揃えて割るのは
+  units の次元換算が担当。この換算は :derived 評価に限定し、sim 照合の
+  「単位完全一致」方針は据え置き — 二つの厳しさを混ぜない）。
+- 実装中に自分のコードで 1 バグ: `cond->` が `cons` の引数順を逆にして
+  self-reference エラーメッセージが seqable でなくなった。テストが即座に捕捉
+  （55 tests のうち scenario-test が赤 → concat + when に書き直して緑）。
+  「AI は堂々と間違える」がツール実装側でも起きる — テストが安全網。
+
+**Next**: (B) render-sim-visual の最小 kami-engine render-IR 変換、
+または (C) 台本→VOICEVOX synthesize-voice の per-line request plan。

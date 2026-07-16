@@ -18,6 +18,10 @@
    :text "ノミの跳躍高はおよそ20cm"
    :value {:quantity 20.0 :unit "cm"}
    :source {:kind :citation :ref "TODO: ノミの跳躍高の一次資料（Bennet-Clark & Lucey 1967 系。要出典確認）"}}
+  {:id :jump-body-lengths
+   :text "ノミは自分の体長の100倍もの高さを跳ぶ"
+   :value {:quantity 100.0 :unit "ratio"}
+   :source {:kind :derived :op :ratio :from [:flea-jump-height :flea-body-length]}}
   {:id :size-ratio
    :text "ノミを人の体長まで拡大すると850倍になる"
    :value {:quantity 850.0 :unit "ratio"}

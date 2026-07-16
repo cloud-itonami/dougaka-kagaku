@@ -21,6 +21,7 @@
                   :sim-disclosure bool :voice kw}
     :human-approved {:by str :at str}}     ; オーナー承認（publish 前提条件）"
   (:require [clojure.string :as str]
+            [kagaku.derived :as derived]
             [kagaku.scenario :as scenario]
             [kagaku.simcase :as simcase]))
 
@@ -54,6 +55,12 @@
                                (double (:quantity c))))]
            {:claim id :ref (:ref source) :expected value :constant c}))]
     {:check :constants :ok? (empty? failed) :detail {:failed failed}}))
+
+(defn check-derived
+  "派生 claim を決定論再計算して宣言値と照合する（kagaku.derived/check）。"
+  [{:keys [episode]}]
+  (let [{:keys [ok? failed]} (derived/check (:claims episode))]
+    {:check :derived :ok? ok? :detail {:failed failed}}))
 
 (defn check-citations
   "引用出所の claim が人間確認済み（:verified-by 付き）の引用台帳にあるか。"
@@ -112,6 +119,7 @@
   [(check-episode facts)
    (check-sim-consistency facts)
    (check-constants facts)
+   (check-derived facts)
    (check-citations facts)
    (check-sim-disclosure facts)
    (check-metadata facts)

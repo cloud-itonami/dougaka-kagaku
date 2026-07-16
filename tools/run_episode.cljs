@@ -10,6 +10,7 @@
   (:require [cljs.reader :as reader]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
+            [kagaku.derived :as derived]
             [kagaku.rom :as rom]
             [kagaku.scenario :as scenario]
             [kagaku.script :as script]
@@ -74,6 +75,18 @@
         :when (= :constant (:kind source))]
   (println " " id (if (some #{id} const-fails) "FAIL" "OK")
            "<-" (:ref source) (str "(" (:source (get constants (:ref source))) ")")))
+
+;; 4a) 派生出所 — claim から claim を再計算して宣言値と照合
+(def derived-claims
+  (filter #(= :derived (get-in % [:source :kind])) (:claims episode)))
+(when (seq derived-claims)
+  (println "\n-- derived (再計算):")
+  (let [{:keys [ok? failed]} (derived/check (:claims episode))]
+    (doseq [{:keys [id source]} derived-claims]
+      (let [fail (first (filter #(= id (:claim %)) failed))]
+        (println " " id (if fail (str "FAIL(" (:reason fail) ")") "OK")
+                 (str (name (:op source)) " " (vec (:from source))))))
+    (when-not ok? (js/process.exit 1))))
 
 ;; 4b) 引用出所 — 人間の出典確認待ちを可視化する（失敗ではない。
 ;;     docs/citations.edn に :verified-by 付きで載るまで factcheck gate は通らない）

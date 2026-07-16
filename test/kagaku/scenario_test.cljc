@@ -53,6 +53,35 @@
   (is (not (:valid? (scenario/validate (assoc valid-episode :duration-s 30)))))
   (is (not (:valid? (scenario/validate (assoc valid-episode :duration-s 3600))))))
 
+(deftest derived-from-unknown-claim-fails
+  (let [{:keys [valid? errors]}
+        (scenario/validate
+         (update valid-episode :claims conj
+                 {:id :derived-bad :text "派生"
+                  :value {:quantity 5.0 :unit "ratio"}
+                  :source {:kind :derived :op :ratio :from [:tidal-ratio :ghost]}}))]
+    (is (not valid?))
+    (is (some #(= :claim/derived-from-unknown (first %)) errors))))
+
+(deftest derived-self-reference-fails
+  (let [{:keys [valid? errors]}
+        (scenario/validate
+         (update valid-episode :claims conj
+                 {:id :loopy :text "自己参照"
+                  :value {:quantity 1.0 :unit "ratio"}
+                  :source {:kind :derived :op :ratio :from [:loopy :tidal-ratio]}}))]
+    (is (not valid?))
+    (is (some #(= :claim/derived-self-reference (first %)) errors))))
+
+(deftest derived-well-formed-passes
+  (is (:valid?
+       (scenario/validate
+        (update valid-episode :claims conj
+                {:id :derived-ok :text "派生"
+                 :value {:quantity 1.0 :unit "ratio"}
+                 :source {:kind :derived :op :scale
+                          :from [:tidal-ratio] :by 0.125}})))))
+
 (deftest sim-claims-filter
   (is (= [:tidal-ratio]
          (map :id (scenario/sim-claims (:claims valid-episode))))))

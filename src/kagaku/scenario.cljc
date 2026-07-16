@@ -30,7 +30,7 @@
     :future-tech          ; 未来技術のシミュレーション（aero / echem / 複合）
     :three-min-math})     ; 3分で理解する数学・物理（数値実験）
 
-(def source-kinds #{:sim :constant :citation})
+(def source-kinds #{:sim :constant :citation :derived})
 
 (defn- claim-errors [{:keys [id text value source] :as _claim}]
   (cond-> []
@@ -47,7 +47,11 @@
     (and (= :constant (:kind source)) (not (keyword? (:ref source))))
     (conj [:claim/constant-ref-malformed id])
     (and (= :citation (:kind source)) (str/blank? (str (:ref source))))
-    (conj [:claim/citation-ref-malformed id])))
+    (conj [:claim/citation-ref-malformed id])
+    (and (= :derived (:kind source))
+         (not (and (keyword? (:op source)) (sequential? (:from source))
+                   (seq (:from source)))))
+    (conj [:claim/derived-ref-malformed id])))
 
 (defn validate
   "episode spec を検証して {:valid? bool :errors [..]} を返す。決定論のみ。"
@@ -73,6 +77,20 @@
                                      (not (contains? case-ids (:case source))))
                             [:claim/sim-case-unknown id (:case source)]))
                         claims))
+            (into (let [claim-ids (set (map :id claims))]
+                    (mapcat (fn [{:keys [id source]}]
+                              (when (= :derived (:kind source))
+                                (concat
+                                 (keep (fn [f]
+                                         (when-not (contains? claim-ids f)
+                                           [:claim/derived-from-unknown id f]))
+                                       (:from source))
+                                 ;; 自己参照は最小の循環。全 SCC 検出まではやらず
+                                 ;; 直接自己参照だけ弾く（多段循環は evaluate が
+                                 ;; :from-claim-missing で止まるが値は出ない）。
+                                 (when (some #{id} (:from source))
+                                   [[:claim/derived-self-reference id]]))))
+                            claims)))
             (into (let [ids (map :id claims)]
                     (when (not= (count ids) (count (set ids)))
                       [[:claims/duplicate-ids]]))))]

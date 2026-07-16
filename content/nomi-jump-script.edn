@@ -6,7 +6,7 @@
    [{:speaker "right" :text "ノミって、人間サイズになったらビルを飛び越えられるんでしょ？" :emotion "happy"}
     {:speaker "left" :text "よく聞く話だね。でも答えは、はっきり『できない』" :emotion "normal"}
     {:speaker "right" :text "えっ、なんで！？" :emotion "surprised"}
-    {:speaker "left" :text "本物のノミは体長 {{flea-body-length}} で、跳躍高は {{flea-jump-height}}。自分の背丈からすると、とんでもない高さだ" :emotion "normal"}]}
+    {:speaker "left" :text "本物のノミは体長 {{flea-body-length}} で、跳躍高は {{flea-jump-height}}。じつに自分の体長の {{jump-body-lengths}} も跳ぶ" :emotion "normal"}]}
   {:location "シミュレーション空間・スケーリング"
    :action "ノミを人間サイズへ拡大。断面積と体積の増え方を色分けして可視化"
    :lines
