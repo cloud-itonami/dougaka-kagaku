@@ -193,3 +193,49 @@ murakumo /v1/audio/speech）は未配線 — 実音声の品質は unknown。
 **Next**: (B) render-sim-visual の最小 kami-engine render-IR 変換
 （kami-engine* / kami-scene-contracts の EDN 形式を先に調査）、
 または (D) compose stage の topic 選定（yukkuri topics.cljc priorityScore 移植）。
+
+## Iteration 6 — 2026-07-16
+
+**Build**:
+
+- `kagaku.scene` — render-sim-visual stage の scene planner。sim 結果を
+  **KAMI scene snapshot（ECS-as-datoms）に変換**。地球-月シーン（地球球体 +
+  月球体 + カメラ + 太陽光）を distance-ratio でパラメタライズし、月の x 位置を
+  sim（tidal-scaling の distance-ratio）と連動させた。
+- **既存 contract 調査を先に実施**（オーナー指示どおり独自形式を作らない）:
+  `orgs/kotoba-lang/kami-contracts` の `kami.scene`（ARCHITECTURE.md §5）が
+  authority と判明。attribute 語彙（:transform/translation, :mesh/asset,
+  :camera/fov, :light/kind, :scene/env …）と snapshot 形
+  {:snapshot/entities [..] :snapshot/assets [..]}、valid? の 4 規則（未知attr/
+  dangling parent/dangling asset/複数 active camera/cycle）を消費者として mirror。
+  kami-contracts を deps に引かず zero-dep を維持（repo-wide 3D 規則の
+  「kami-engine stack を消費する側」に留まる）。
+- pipeline `:render-sim-visual` stage 配線（scene 生成 → validate、担当外
+  series は素通り）。tests 61 → 69（140 assertions）green。
+- E2E: tsuki episode から scene 生成、entities [earth moon camera sun]、
+  月 x=192.2 Mm（半分の距離）、kami.scene 語彙で valid。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+パイプライン被覆: compose→sim→script→factcheck→**scene(snapshot)**→voice(plan)
+まで純データ。実 render（kami-engine headless / WebGPU）は未配線 — レンダ品質は
+unknown。scene planner は現状 moon-approach のみ担当（他 series は nil を正直に
+返す、未実装）。
+
+**Learn**:
+
+- (B) は「contract 調査が空振りなら独自形式の誘惑」を懸念していたが、
+  **空振りではなかった** — kami-scene-contracts（ドメインカタログ主体で node/
+  transform が無い）を最初に見て一瞬 swamp かと思ったが、kami-contracts の
+  kami.scene に本命の ECS-as-datoms scene 契約（schema + snapshot + valid?）が
+  あった。「最初に当たった repo が目的物とは限らない」— grep を複数 repo に
+  広げたのが効いた。
+- 消費者として語彙を mirror する設計（deps に引かず known-attrs と valid? 規則を
+  authority 明記でコピー）は、zero-dep 維持と contract 準拠を両立できた。
+  authority が進んだら追随する義務は docstring に明記。
+- sim → visual の連動を「月の x = 平均距離 × distance-ratio」で結んだことで、
+  台本の「8倍/9.66日」と画面の月位置が同じ sim パラメータ由来になった
+  （数字と絵の出所が一致 = 科学解説の誠実性の一部を構造化）。
+
+**Next**: (実 render 手前の純データ経路はほぼ揃った) 実 IO 配線の前段として
+(D) compose の topic 選定（yukkuri topics.cljc priorityScore 移植）、または
+scene planner の他 series 対応（animal-power の相似則 scene 等）。

@@ -7,6 +7,7 @@
   (:require [kagaku.scenario :as scenario]
             [kagaku.script :as script]
             [kagaku.voice :as voice]
+            [kagaku.scene :as scene]
             [kagaku.simcase :as simcase]
             [kagaku.factcheck :as factcheck]))
 
@@ -70,6 +71,15 @@
         :publish (assoc state :stage (next-stage stage) :approved verdict)
         :held (assoc state :status :held :reason :awaiting-human-review)
         (assoc state :status :rejected :failed (:failed verdict))))
+
+    :render-sim-visual
+    ;; sim 結果を KAMI scene snapshot に変換（担当 series のみ。実 render は :exec）。
+    (if-let [snap (scene/scene-for-episode (:episode state))]
+      (let [{:keys [valid? errors]} (scene/validate snap)]
+        (if valid?
+          (assoc state :stage (next-stage stage) :scene snap)
+          (assoc state :status :rejected :errors errors)))
+      (assoc state :stage (next-stage stage)))
 
     :synthesize-voice
     ;; 展開済み台本があれば per-line VOICEVOX plan を積む（IO は :exec）。
