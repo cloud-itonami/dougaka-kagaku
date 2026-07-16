@@ -5,6 +5,7 @@
 
 (def constants
   {:gravitational-constant {:quantity 6.67430e-11 :unit "m^3 kg^-1 s^-2" :source "CODATA 2022"}
+   :standard-gravity {:quantity 9.80665 :unit "m/s^2" :source "CGPM 1901"}
    :earth-mass {:quantity 5.9722e24 :unit "kg" :source "NASA"}
    :moon-mass {:quantity 7.342e22 :unit "kg" :source "NASA"}})
 
@@ -127,6 +128,28 @@
     (is (thrown? #?(:clj Exception :cljs js/Error)
                  (rom/solve {:solver {:kind :reduced-order-aero} :domain {:cd 0.3}}
                             {:air-density-sea-level {:quantity 1.225 :unit "kg/m^3"}})))))
+
+(deftest double-pendulum-chaos
+  (testing "初期値鋭敏性: わずか 0.001rad の差が発散する（カオス）"
+    (let [case- {:solver {:kind :numeric-experiment}
+                 :domain {:experiment :double-pendulum :theta1 2.0 :theta2 2.0
+                          :epsilon 1.0e-3 :steps 10000 :dt 0.001}}
+          {:keys [outputs]} (rom/solve case- constants)]
+      (is (> (get-in outputs [:final-divergence :quantity]) 1.0))
+      (testing "決定論（同じ case は同じ発散）"
+        (is (= (:outputs (rom/solve case- constants)) outputs)))
+      (testing "**RK4 の妥当性 = エネルギー保存**（誤差が全エネルギー比で微小）。
+                これが solver の正しさゲート — 誤った運動方程式なら保存しない"
+        (is (< (get-in outputs [:energy-drift :quantity]) 0.001)))))
+  (testing "刻みを細かくするとエネルギー保存誤差が縮む（正しい積分の証拠）"
+    (let [drift (fn [dt steps]
+                  (get-in (rom/solve {:solver {:kind :numeric-experiment}
+                                      :domain {:experiment :double-pendulum
+                                               :theta1 2.0 :theta2 2.0 :epsilon 1e-3
+                                               :steps steps :dt dt}}
+                                     constants)
+                          [:outputs :energy-drift :quantity]))]
+      (is (< (drift 0.0005 20000) (drift 0.005 2000))))))
 
 (deftest missing-constant-throws
   (testing "定数テーブルに無い ref は黙って補完せず例外"

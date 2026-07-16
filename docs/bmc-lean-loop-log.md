@@ -925,3 +925,49 @@ moon-approach series は 2本に。audit mean 99%。実 IO は音声のみ実測
 
 **Next**: 各 series の深さ（2本目）、cadence 運用、または rom の :road-load /
 :rom-fc 追加で future-tech の別 topic。
+
+## Iteration 24 — 2026-07-17
+
+**判断**: 推奨は (AB) cheetah-vs-car（:road-load）だったが、走行抵抗の
+**転がり抵抗 μmg は動物に物理的に馴染まない**（動物はタイヤを持たない）ため、
+cheetah-vs-car を :road-load で解くと物理を歪める。捏造ゼロ・物理正確性を
+最優先する本チャンネルの方針に反するので**採らず**、物理的にクリーンな (AC)
+二重振り子（決定論カオス）を選んだ。
+
+**Build**:
+
+- rom :numeric-experiment に **:double-pendulum 実装**（RK4 積分）。m=L=1 の
+  二重振り子を、初期値がわずか 0.001rad 違う 2 軌道で 10 秒積分し、終端の
+  角空間の隔たり（発散）を出力。g は constants の standard-gravity。
+- 9本目 episode `content/double-pendulum.edn`（three-min-math 2本目）。全 claim =
+  sim（初期ずれ 0.001rad・10秒・発散 9.53rad）+ derived（増幅 9530倍）。
+  「式は決まっているのに予測できない」カオスを全 sim 由来で。
+- units に "rad"/"Hz" 追加。tests 105→106（244 assertions）green。audit 全9episode
+  ALL PASS mean 99%。bench に double-pendulum の wall-ms 538（初の重い計算、
+  RK4 2万ステップ×2軌道×検証）。
+
+**Learn（最も重要な実害 — 自分の solver の運動方程式バグを検出・修正）**:
+
+- **初回実装の dp-accel（θ2''）にバグ**。ポテンシャル項を 2g cosΔ sinθ2 と
+  書いたが、Lagrangian から導出し直すと正しくは 2g sinθ2（cosΔ が余計）。
+  症状: **エネルギー保存誤差が全エネルギー(~12)を超える 20.3**、しかも
+  **dt を細かくしても縮まない**（数値誤差なら縮むはず → 方程式バグの決定的兆候）。
+- 修正後: エネルギー保存誤差 dt=0.005 で 7e-5、dt=0.0005 で 3e-10 と dt とともに
+  縮小 = 正しい RK4 挙動。**「エネルギー保存が dt で縮むか」を solver の正しさ
+  ゲートにしてテスト固定**した。
+- これはチャンネルが最も嫌う「AI が計算を堂々と間違える」型が**自分の solver
+  実装で起きた**実例。ロッシュ限界（iter23）は実測と照合できたが、二重振り子の
+  発散値は universal な照合先が無いので、**物理の不変量（エネルギー保存）を
+  独立の検証軸にする**のが効いた。「絵/数値に使わない検証専用出力（energy-drift）」
+  を solver に持たせる設計は、この型のバグの安全網になる。
+- もう1つの実害: solver が g を constants から取るのに rom-test の constants
+  fixture に standard-gravity が無くテストが error。fixture 更新で解消
+  （iter23 の「solver 追加は関連箇所の同期が要る」の別形）。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 9本、three-min-math series 2本、全 stage 揃い 5本（scene 付き。pi/dp は
+three-min-math だが scene は pi 専用）。rom solver 6 kinds（experiment は
+fold/pi/double-pendulum の 3）。audit mean 99%。実 IO は音声のみ実測。
+
+**Next**: cadence 運用（daily_report）、各 series の深さ、または実 IO の
+2 モダリティ目（kami render harness）。

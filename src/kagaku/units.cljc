@@ -30,7 +30,9 @@
    "W" [:power 1.0]
    "ratio" [:dimensionless 1.0]    ; 倍率（8倍・850倍）
    "1" [:dimensionless 1.0]        ; 純粋な無次元数（円周率・誤差、バレ数）
-   "count" [:count 1.0]})          ; 個数（10万個）
+   "count" [:count 1.0]            ; 個数（10万個）
+   "rad" [:angle 1.0]              ; 角度（ラジアン、二重振り子の隔たり）
+   "Hz" [:frequency 1.0]})         ; 周波数（笛の音）
 
 (defn dimension [unit] (first (get table unit)))
 (defn factor [unit] (second (get table unit)))

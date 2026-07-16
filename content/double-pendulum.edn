@@ -1,0 +1,41 @@
+;; エピソード spec の実例 9 — 「二重振り子はなぜ予測できないのか（カオス）」。
+;; three-min-math 2 本目。rom :numeric-experiment の :double-pendulum を RK4 で
+;; 決定論積分し、初期値がわずか 0.001 ラジアン違う 2 つの振り子が 10 秒後に
+;; どれだけ発散するか（初期値鋭敏性＝カオス）を全 sim 由来で示す。
+;; ※ 発散値はこの決定論計算（dt=0.001, 10000 steps, θ=2.0）に固有の再現値。
+{:series :three-min-math
+ :question "二重振り子は、なぜ同じように離しても二度と同じ動きをしないのか？"
+ :duration-s 180
+ :claims
+ [{:id :initial-gap
+   :text "スタート時のずれは、たった0.001ラジアン"
+   :value {:quantity 0.001 :unit "rad"}
+   :source {:kind :sim :case :dp :output :initial-gap}}
+  {:id :sim-time
+   :text "そのまま10秒間、振らせてみる"
+   :value {:quantity 10.0 :unit "s"}
+   :source {:kind :sim :case :dp :output :sim-time-s}}
+  {:id :final-divergence
+   :text "10秒後には、2つの振り子の角度は約9.5ラジアンも食い違う"
+   :value {:quantity 9.53 :unit "rad"}
+   :source {:kind :sim :case :dp :output :final-divergence}}
+  {:id :amplification
+   :text "つまり最初のずれが、およそ9500倍に拡大する"
+   :value {:quantity 9530.0 :unit "ratio"}
+   :source {:kind :derived :op :ratio :from [:final-divergence :initial-gap]}}]
+ :sim-cases
+ [{:id :dp
+   :solver {:kind :numeric-experiment}
+   :domain {:experiment :double-pendulum
+            :theta1 2.0 :theta2 2.0 :epsilon 1.0e-3 :steps 10000 :dt 0.001
+            :note "RK4 積分。g は standard-gravity。エネルギー保存誤差 ~1e-8 で妥当性確認済み"}
+   :budget {:steps 10000}
+   :outputs {:initial-gap {:unit "rad"}
+             :sim-time-s {:unit "s"}
+             :final-divergence {:unit "rad"}}}]
+ :beats
+ ["導入: 二本の腕がつながった二重振り子。同じ高さから離しても毎回ちがう動き"
+  "仕掛け: ほんのわずかな初期のずれが、時間とともに指数的に拡大する"
+  "sim: 0.001ラジアンだけ違う2つの振り子を並べて振らせる（RK4 積分）"
+  "結果: 10秒後には角度が約9.5ラジアン食い違う。最初の約9500倍"
+  "まとめ: これがカオス。式は決まっているのに、実際上は予測不能"]}

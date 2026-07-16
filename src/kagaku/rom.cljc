@@ -69,11 +69,76 @@
                ;; strength-to-weight-ratio と同じ物理の別表示。
                :strength-to-weight-penalty {:quantity l :unit "ratio"}}}))
 
+;; --- 二重振り子（決定論カオス）--------------------------------------------
+;; m1=m2=1, L1=L2=1 の二重振り子。RK4 で積分し、初期値がわずかに違う 2 つの
+;; 軌道が角空間でどれだけ発散するか（初期値鋭敏性＝カオス）を測る。g は定数。
+(defn- dp-accel
+  "θ1'' θ2''（標準閉形式、m1=m2=1, L1=L2=1）。"
+  [t1 t2 w1 w2 g]
+  (let [d (- t1 t2)
+        cd (Math/cos d) sd (Math/sin d)
+        den (- 2.0 (* cd cd))
+        a1 (/ (- (* -1.0 sd (+ (* w1 w1 cd) (* w2 w2)))
+                 (* g (- (* 2.0 (Math/sin t1)) (* (Math/sin t2) cd))))
+              den)
+        ;; ポテンシャル項は 2g(sinθ1 cosΔ − sinθ2)。Lagrangian からの導出で
+        ;; sinθ2 に cosΔ は掛からない（この係数取り違えが energy drift の原因だった）。
+        a2 (/ (+ (* sd (+ (* 2.0 w1 w1) (* w2 w2 cd)))
+                 (* 2.0 g (- (* (Math/sin t1) cd) (Math/sin t2))))
+              den)]
+    [a1 a2]))
+
+(defn- dp-step
+  "RK4 1 ステップ。state=[t1 t2 w1 w2]。"
+  [[t1 t2 w1 w2] g dt]
+  (let [f (fn [[a b c e]]
+            (let [[aa ab] (dp-accel a b c e g)] [c e aa ab]))
+        add (fn [s k h] (mapv #(+ %1 (* h %2)) s k))
+        k1 (f [t1 t2 w1 w2])
+        k2 (f (add [t1 t2 w1 w2] k1 (/ dt 2.0)))
+        k3 (f (add [t1 t2 w1 w2] k2 (/ dt 2.0)))
+        k4 (f (add [t1 t2 w1 w2] k3 dt))]
+    (mapv (fn [s a b c e] (+ s (* (/ dt 6.0) (+ a (* 2.0 b) (* 2.0 c) e))))
+          [t1 t2 w1 w2] k1 k2 k3 k4)))
+
+(defn- dp-energy
+  "全エネルギー E=KE+PE（m=L=1、RK4 の妥当性検証用）。"
+  [[t1 t2 w1 w2] g]
+  (let [vx1 (* w1 (Math/cos t1)) vy1 (* w1 (Math/sin t1))
+        vx2 (+ vx1 (* w2 (Math/cos t2))) vy2 (+ vy1 (* w2 (Math/sin t2)))
+        y1 (- (Math/cos t1)) y2 (- y1 (Math/cos t2))
+        ke (+ (* 0.5 (+ (* vx1 vx1) (* vy1 vy1)))
+              (* 0.5 (+ (* vx2 vx2) (* vy2 vy2))))
+        pe (+ (* g y1) (* g y2))]
+    (+ ke pe)))
+
+(defn- dp-run [state g dt steps]
+  (loop [i 0 s state] (if (= i steps) s (recur (inc i) (dp-step s g dt)))))
+
 (defmethod solve :numeric-experiment
   ;; 決定論数値実験。:experiment で分岐（乱数を使う場合も seed 必須の
-  ;; 決定論 PRNG — 同じ case は常に同じ出力）。
-  [{:keys [domain]} _constants]
+  ;; 決定論 PRNG — 同じ case は常に同じ出力）。g は constants から取る。
+  [{:keys [domain]} constants]
   (case (:experiment domain)
+    :double-pendulum
+    ;; 2 つの近い初期値の軌道を積分し、終端での角空間の隔たり（発散）を測る。
+    (let [g (constant constants :standard-gravity "m/s^2")
+          {:keys [theta1 theta2 epsilon steps dt]
+           :or {theta1 2.0 theta2 2.0 epsilon 1.0e-3 steps 4000 dt 0.005}} domain
+          s0 [theta1 theta2 0.0 0.0]
+          s0b [(+ theta1 epsilon) theta2 0.0 0.0]
+          e-start (dp-energy s0 g)
+          end-a (dp-run s0 g dt steps)
+          end-b (dp-run s0b g dt steps)
+          e-end (dp-energy end-a g)
+          dth1 (- (nth end-a 0) (nth end-b 0))
+          dth2 (- (nth end-a 1) (nth end-b 1))
+          divergence (Math/sqrt (+ (* dth1 dth1) (* dth2 dth2)))]
+      {:outputs {:initial-gap {:quantity epsilon :unit "rad"}
+                 :final-divergence {:quantity divergence :unit "rad"}
+                 :sim-time-s {:quantity (* dt steps) :unit "s"}
+                 ;; RK4 のエネルギー保存誤差（妥当性の自己申告、絵/数値には使わない）
+                 :energy-drift {:quantity (Math/abs (- e-end e-start)) :unit "1"}}})
     :fold-to-moon
     ;; 厚さ t0 の紙を n 回折る → t0 * 2^n
     (let [{:keys [thickness-mm folds]} domain

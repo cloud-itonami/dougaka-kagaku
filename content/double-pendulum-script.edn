@@ -1,0 +1,20 @@
+;; 台本 — content/double-pendulum.edn に対応。数値は全て {{claim-id}} placeholder。
+{:scenes
+ [{:location "白い空間・揺れる二重振り子"
+   :action "二本の腕がつながった振り子が複雑に揺れる"
+   :lines
+   [{:speaker "right" :text "この振り子、なんだかめちゃくちゃな動きだね" :emotion "surprised"}
+    {:speaker "left" :text "二重振り子だよ。同じ高さから離しても、二度と同じ動きにならないんだ" :emotion "normal"}
+    {:speaker "right" :text "え、同じように離してるのに？" :emotion "surprised"}]}
+  {:location "シミュレーション空間・2つの振り子を並置"
+   :action "ほぼ重なった2つの振り子。初期角度がわずかに違う"
+   :lines
+   [{:speaker "left" :text "たしかめよう。スタートのずれは {{initial-gap}} だけ。ほとんど同じだ" :emotion "normal"}
+    {:speaker "left" :text "この二つを {{sim-time}} のあいだ、そのまま振らせてみる" :emotion "normal"}
+    {:speaker "right" :text "最初はぴったり重なってるね" :emotion "happy"}]}
+  {:location "シミュレーション空間・2つが大きくずれる"
+   :action "重なっていた2つの振り子が、途中から全く別の動きに分かれる"
+   :lines
+   [{:speaker "left" :text "ところが {{sim-time}} 後、二つの角度は {{final-divergence}} も食い違う" :emotion "surprised"}
+    {:speaker "right" :text "さっきまで重なってたのに、こんなにバラバラ！" :emotion "surprised"}
+    {:speaker "left" :text "最初のずれが {{amplification}} に拡大したんだ。式は決まっているのに予測できない。これがカオスだよ" :emotion "normal"}]}]}
