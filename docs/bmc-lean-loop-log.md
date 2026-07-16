@@ -39,3 +39,36 @@ superproject の共有 BMC システム（`70-tools/bmc/`、gftdcojp 11 プロ�
 
 **Next**: generate-script の L/R スキーマ流用（yukkuri から）、
 render-sim-visual の kami-engine render-IR 変換の最小実装、D1 schema 検討。
+
+## Iteration 2 — 2026-07-16
+
+**Build**:
+
+- `kagaku.script` — L/R 掛け合い台本 planner（yukkuri generate_script の
+  {:scenes [{:lines [{:speaker :text :emotion}]}]} スキーマ継承）。新規約:
+  **生テキストへのアラビア数字（半角・全角）直書き禁止**、数値言及は
+  `{{claim-id}}` placeholder のみ、展開（`script/expand`）が factcheck 済み
+  claim 値から機械転記。全数値 claim の言及必須（死に claim 検出）。
+  LLM request spec（`script/request-spec`）も pure data で実装。
+- pipeline `:generate-script` stage に script 検証を配線（episode + script の
+  両方が valid でないと前進しない）。
+- E2E runner に台本検証 + 展開表示を追加。`content/tsuki-half-distance-script.edn`
+  （9 行の実台本）で実走: validate OK、展開後テキストに 8倍 / 9.66日 /
+  384400km が転記され placeholder 残留なし。
+- tests 35 → 43（78 assertions）green（nbb）。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+台本経路のカバレッジ: planner + 検証 + 展開まで動作。LLM 実呼び出し
+（murakumo text）と TTS は未配線。
+
+**Learn**:
+
+- H1 補強: 数字直書き禁止 + placeholder 転記は、台本という「LLM が最も
+  数値を捏造しやすい箇所」を構造的に塞げた（n=1、実 LLM 出力での違反率は
+  未計測 — 実配線後に validate reject 率を測る）。
+- 既知の穴: 漢数字（「三十個」等）は digit 検査を通過する。今回の実台本では
+  正しい近似（384400/12742≈30.2）だったが、機械検証はされていない —
+  human-review の重点確認項目として次反復以降で telop/notes に明示する案。
+
+**Next**: (b) 2 本目 episode（:animal-power flea-jump、:scaling-law）E2E、
+または (c) render-sim-visual の最小 render-IR 変換。

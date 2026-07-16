@@ -1,0 +1,22 @@
+;; 台本の実例 — content/tsuki-half-distance.edn の episode に対応。
+;; 数値はすべて {{claim-id}} placeholder（生テキストへの数字直書きは
+;; kagaku.script/validate が機械的に弾く）。展開は kagaku.script/expand。
+{:scenes
+ [{:location "夜空・満月"
+   :action "現在の月をバックに二人が登場"
+   :lines
+   [{:speaker "left" :text "今夜は満月。ところで月までの距離、知ってる？" :emotion "normal"}
+    {:speaker "right" :text "えっ、意外と近いんじゃないの？" :emotion "surprised"}
+    {:speaker "left" :text "平均で {{current-distance}}。地球を三十個ならべた距離だね" :emotion "normal"}]}
+  {:location "シミュレーション空間・地球と月の軌道"
+   :action "kami-engine の地球-月シーン。距離パラメータを半分へスライド"
+   :lines
+   [{:speaker "right" :text "もしこれが半分まで近づいたら、どうなるの？" :emotion "normal"}
+    {:speaker "left" :text "まず潮汐力。距離の三乗に反比例するから、半分になると {{tidal-ratio}} に跳ね上がる" :emotion "normal"}
+    {:speaker "right" :text "二倍じゃなくて {{tidal-ratio}} ！？" :emotion "surprised"}]}
+  {:location "シミュレーション空間・公転軌道の俯瞰"
+   :action "軌道周期の変化をタイムラプス表示"
+   :lines
+   [{:speaker "left" :text "公転も速くなる。ひと月かかっていた一周が、およそ {{orbital-period}} になる" :emotion "normal"}
+    {:speaker "right" :text "ひと月が {{orbital-period}} って、カレンダーが壊れちゃう" :emotion "sad"}
+    {:speaker "left" :text "そう、満ち欠けの周期も潮も、暮らしの前提が全部変わる。これが逆三乗則の威力だよ" :emotion "normal"}]}]}

@@ -5,6 +5,7 @@
    返すだけで IO しない。実行は :exec 側（murakumo engines / cae.solver hosts /
    kami-engine headless render / renderer-mac / YouTube client）が担う。"
   (:require [kagaku.scenario :as scenario]
+            [kagaku.script :as script]
             [kagaku.simcase :as simcase]
             [kagaku.factcheck :as factcheck]))
 
@@ -46,10 +47,14 @@
         (assoc state :status :rejected :errors errors)))
 
     :generate-script
-    (let [{:keys [valid? errors]} (scenario/validate (:episode state))]
-      (if valid?
+    (let [{ep-valid? :valid? ep-errors :errors} (scenario/validate (:episode state))
+          {sc-valid? :valid? sc-errors :errors}
+          (if-let [sc (:script state)]
+            (script/validate sc (get-in state [:episode :claims]))
+            {:valid? true :errors []})]
+      (if (and ep-valid? sc-valid?)
         (assoc state :stage (next-stage stage))
-        (assoc state :status :rejected :errors errors)))
+        (assoc state :status :rejected :errors (into (vec ep-errors) sc-errors))))
 
     :factcheck
     (let [{:keys [decision failed]} (factcheck/gate (:facts state))]

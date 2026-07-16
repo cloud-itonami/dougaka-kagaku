@@ -5,10 +5,11 @@
             [kagaku.scenario-test]
             [kagaku.simcase-test]
             [kagaku.factcheck-test]
-            [kagaku.rom-test]))
+            [kagaku.rom-test]
+            [kagaku.script-test]))
 
 (defmethod t/report [:cljs.test/default :end-run-tests] [m]
   (when-not (t/successful? m)
     (set! (.-exitCode js/process) 1)))
 
-(t/run-tests 'kagaku.scenario-test 'kagaku.simcase-test 'kagaku.factcheck-test 'kagaku.rom-test)
+(t/run-tests 'kagaku.scenario-test 'kagaku.simcase-test 'kagaku.factcheck-test 'kagaku.rom-test 'kagaku.script-test)

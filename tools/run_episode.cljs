@@ -11,6 +11,7 @@
             [clojure.pprint :refer [pprint]]
             [kagaku.rom :as rom]
             [kagaku.scenario :as scenario]
+            [kagaku.script :as script]
             [kagaku.simcase :as simcase]
             ["fs" :as fs]))
 
@@ -73,7 +74,19 @@
   (println " " id (if (some #{id} const-fails) "FAIL" "OK")
            "<-" (:ref source) (str "(" (:source (get constants (:ref source))) ")")))
 
-;; 5) bench 台帳
+;; 5) 台本（<episode>-script.edn があれば検証 + 展開）
+(def script-path (.replace episode-path ".edn" "-script.edn"))
+(when (fs/existsSync script-path)
+  (let [sc (reader/read-string (fs/readFileSync script-path "utf8"))
+        {:keys [valid? errors]} (script/validate sc (:claims episode))]
+    (println "\n-- script/validate:" script-path (if valid? "OK" "FAIL"))
+    (if valid?
+      (doseq [scene (:scenes (script/expand sc (:claims episode)))
+              line (:lines scene)]
+        (println "   " (:speaker line) "|" (:text line)))
+      (do (pprint errors) (js/process.exit 1)))))
+
+;; 6) bench 台帳
 (def episode-id (-> episode-path (.split "/") last (.replace ".edn" "") keyword))
 (def datoms (simcase/bench-datoms episode-id (:sim-cases episode) results))
 (def stamped (mapv #(assoc % :kagaku.bench/at (.toISOString (js/Date.))) datoms))
