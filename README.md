@@ -62,6 +62,7 @@ clojure -M:test
 nbb --classpath src tools/audit.cljs
 
 # 1 episode を full-produce E2E（compose→…→render-video の純データ経路を畳む）
+# scene が付く episode は human-review 用 SVG も scratchpad に自動書き出し
 nbb --classpath src tools/run_episode.cljs content/tsuki-half-distance.edn
 
 # 次に作る topic を選定（priorityScore + series ローテーション）

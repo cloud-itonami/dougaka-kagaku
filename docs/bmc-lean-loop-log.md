@@ -738,3 +738,39 @@ tsuki/ant/pi。実 IO は音声のみ実測。
 
 **Next**: everyday-mechanism/future-tech の scene 対応、full-produce E2E への
 SVG 出力統合、または 6本目 episode。
+
+## Iteration 19 — 2026-07-17
+
+**Build**:
+
+- full-produce E2E（run_episode.cljs）への **human-review 用 SVG 出力統合**。
+  pipeline/run-plan の終端 state に :scene snapshot があれば、
+  kagaku.preview の SVG を scratchpad に自動書き出し（`kagaku-review-<episode>.svg`）
+  してパスを表示。**human-review の材料＝sim 数値 + 台本展開 + scene 画 + credit が
+  1 コマンドで揃う**。scene 未対応 episode は skip（paper で確認）。
+- 本チャンネルの要（人間が事実確認する設計、ADR の human-review 無条件 hold）の
+  実運用を回しやすくする締めくくり機能。SVG は非-authoritative（authoritative
+  render は WebGPU）と明記済み（iter15 の preview をそのまま消費）。
+- README 追記。tests 100 green（runner 追加のみ、lib 不変）。E2E 実測:
+  tsuki は scene 画 SVG 書き出し + provenance/scene/voice 緑で :awaiting-exec、
+  paper は scene none で SVG skip。
+
+**Learn**:
+
+- full-produce E2E が「純データ経路の疎通確認」（iter7）から「human-review の
+  材料出し」に育った。1 コマンドで (a) sim 数値の claim 整合、(b) 台本の
+  placeholder 展開後テキスト、(c) VOICEVOX 音声 plan と credit、(d) scene の
+  配置 SVG が全部出る。人間はこれを見て事実確認 → 承認（:human-approved）を
+  facts に入れれば publish 判定に進む、という運用フローの入力が揃った。
+- iter15 で「実 render は重くて未実測、代わりに SVG thumbnail」とした判断が、
+  ここで human-review 材料として実際に活きた。「authoritative は無理でも
+  review を助ける非-authoritative preview」の価値が具体化。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+full-produce E2E が human-review 材料（数値/台本/音声plan/scene画）を 1 コマンドで
+出せる。実 IO は音声のみ実測、画は非-authoritative SVG のみ（authoritative
+WebGPU render は未実測）。
+
+**Next**: future-tech/everyday-mechanism の scene or episode 対応、
+実運用の human-review→approve→publish フローの :exec 側配線（別スコープ）、
+または 6本目 episode。

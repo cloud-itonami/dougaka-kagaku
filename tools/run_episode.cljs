@@ -16,6 +16,7 @@
             [kagaku.script :as script]
             [kagaku.voice :as voice]
             [kagaku.scene :as scene]
+            [kagaku.preview :as preview]
             [kagaku.pipeline :as pipeline]
             [kagaku.simcase :as simcase]
             ["fs" :as fs]))
@@ -170,7 +171,13 @@
              "| scene:" (if (:scene end) (str (get-in end [:scene :snapshot/name]) " (valid)") "none")
              "| voice lines:" (count (:voice-plans end)))
     (println "   credit:" (:voice-credits end))
-    (when (:pending-citations end) nil)
+    ;; human-review 用の scene サムネイル SVG を自動書き出し（非-authoritative、
+    ;; iter15 の preview）。sim 数値 + 台本展開 + scene 画 が 1 コマンドで揃う。
+    (when-let [snap (:scene end)]
+      (let [svg-out (.replace episode-path #"^content/(.*)\.edn$"
+                              "/private/tmp/claude-501/-Users-junkawasaki-github-com-junkawasaki/80eb0bfa-400a-400a-8326-1ad3e8d37674/scratchpad/kagaku-review-$1.svg")]
+        (fs/writeFileSync svg-out (preview/svg snap))
+        (println "   scene 画（human-review 用、非-authoritative）:" svg-out)))
     (cond
       (= :awaiting-exec (:status end))
       (println "   → provenance/scene/voice まで OK。render 測定は :exec 実測待ち"
