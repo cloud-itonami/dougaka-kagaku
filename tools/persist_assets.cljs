@@ -31,15 +31,22 @@
 (defn sh-ok [cmd opts]
   (try (sh cmd opts) true (catch :default _ false)))
 
+(def kotoba-lang "/Users/junkawasaki/github/com-junkawasaki/orgs/kotoba-lang")
+
 (defn wrap-remote-on-path!
   "kotoba-annex の special remote を叩く wrapper を用意し PATH に足す。
-   KOTOBASE_ENDPOINT 未設定なら directory store（KOTOBA_ANNEX_DIR）。"
+   KOTOBASE_ENDPOINT 設定時は kotobase.net（CACAO 自己 mint。cacao/ed25519/cbor が
+   classpath に要る）、未設定なら directory store（KOTOBA_ANNEX_DIR）。"
   []
-  (let [binw (str scratch "/annexbin")]
+  (let [binw (str scratch "/annexbin")
+        cp (str annex-remote-src "/src"
+                ":" kotoba-lang "/org-chainagnostic-cacao/src"
+                ":" kotoba-lang "/org-ietf-ed25519/src"
+                ":" kotoba-lang "/org-ietf-cbor/src")]
     (fs/mkdirSync binw #js {:recursive true})
     (fs/writeFileSync (str binw "/git-annex-remote-kotobase")
-                      (str "#!/bin/bash\nexec nbb --classpath " annex-remote-src
-                           "/src " annex-remote-src "/bin/git-annex-remote-kotobase.cljs\n"))
+                      (str "#!/bin/bash\nexec nbb --classpath \"" cp "\" "
+                           annex-remote-src "/bin/git-annex-remote-kotobase.cljs\n"))
     (fs/chmodSync (str binw "/git-annex-remote-kotobase") 0755)
     {:PATH (str binw ":" js/process.env.PATH)
      :KOTOBA_ANNEX_DIR remote-dir}))
@@ -51,13 +58,18 @@
     (set! (.-KOTOBA_ANNEX_DIR e) (:KOTOBA_ANNEX_DIR env))
     e))
 
+(def kotobase? (not (str/blank? (str js/process.env.KOTOBASE_ENDPOINT))))
+
 (defn ensure-dataset! []
   (when-not (fs/existsSync (str dataset "/.git"))
     (fs/mkdirSync dataset #js {:recursive true})
     (sh "git init -q" {})
     (sh "git annex init kagaku-assets -q" {:env run-env}))
   (when-not (sh-ok "git annex info kotobase" {:env run-env})
-    (sh "git annex initremote kotobase type=external externaltype=kotobase encryption=none"
+    ;; ⚠ kotobase backend は chunk 必須（実測: 191KB 単発 put は 2 分超 timeout、
+    ;; 32KiB chunk で安定。ADR-2607175000 / kotoba-annex README）。
+    (sh (str "git annex initremote kotobase type=external externaltype=kotobase "
+             "encryption=none" (when kotobase? " chunk=32KiB"))
         {:env run-env})))
 
 (defn asset-dirs []
@@ -68,7 +80,11 @@
        sort))
 
 (println "== kagaku 素材の永続化（DataLad/git-annex → special remote）")
-(println "   dataset:" dataset "\n   remote (directory store):" remote-dir "\n")
+(println "   dataset:" dataset)
+(println "   backend:" (if kotobase?
+                         (str "kotobase.net (" js/process.env.KOTOBASE_ENDPOINT
+                              ", CACAO 自己 mint, chunk=32KiB)")
+                         (str "directory store (" remote-dir ")")) "\n")
 
 (ensure-dataset!)
 (fs/mkdirSync (str dataset "/audio") #js {:recursive true})
@@ -93,7 +109,7 @@
 (println "== 永続化完了")
 (println "   episode:" (count eps) "本 (" (str/join ", " eps) ")")
 (println "   fsck ok 行:" (str/trim fsck))
-(println "   remote block store の永続化ファイル数:" persisted)
-(when (str/blank? (str js/process.env.KOTOBASE_ENDPOINT))
-  (println "   ※ 現在は directory store（ローカル、認証不要）。kotobase.net へは"
-           "\n     KOTOBASE_ENDPOINT/graph 設定 + CACAO 認証（owner-gated、ADR-2607175000）。"))
+(if kotobase?
+  (println "   → kotobase.net に永続化（tenant = 自鍵 did:key。store.list で確認可）")
+  (println "   → directory store の永続化ファイル数:" persisted
+           "\n     （kotobase.net に置くなら KOTOBASE_ENDPOINT=https://kotobase.net）"))

@@ -1219,3 +1219,28 @@ B2（m365 先例）は今すぐ運用可能。
 **Measure（続き）**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
 episode 10本、tools 10本。永続化: special remote 検証済み + kotobase blob 面着地 +
 kagaku 素材の実永続化実証（directory store）。
+
+## Iteration 32 — 2026-07-17（永続化: kotobase.net 到達）
+
+**Build / Measure（実測）**:
+
+- `persist_assets` を **kotobase.net backend 対応**（KOTOBASE_ENDPOINT 設定で
+  切替、cacao/ed25519/cbor を wrapper の classpath に、chunk=32KiB を自動付与）。
+- **kagaku の pi episode（9 wav）を実 kotobase.net に永続化完了**: fsck 9/9 ok。
+  tenant を `net.kotobase.store.list` で確認 → **75 chunk が実在**
+  （例 `SHA256E-s155180-S32768-C1--…`）。tenant = 自鍵 did:key。
+
+**Learn（この turn の 3 つの実測知見。すべて「成功と報告して実は失敗」型の回避）**:
+
+- **kotobase-server の blob 面も worker 配線も本番 deploy も不要だった**。live worker は
+  `kotobase.istore` を使い、`net.kotobase.store.*` は既に kotobase.net で live。
+  設計を実測で訂正（ADR-2607175000 更新済み）。
+- **CACAO は自己発行で完結**。actor が自鍵を生成 → 鍵由来 did:key が自分の graph、
+  resolve-viewer は did を取り出すだけ。**owner の token 受け渡しは構造的に不要**。
+- **不在キーでも HTTP 200 + {ok:false} が返る罠**で `present?` が誤答し、git-annex が
+  STORE を丸ごとスキップ（copy は ok と報告）。プロトコルトレースの
+  `CHECKPRESENT-SUCCESS` 誤答で特定。回帰テストで固定。
+- 併せて **stdin close の即 exit が非同期 STORE を殺す**不具合も修正。
+
+**Measure（続き）**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+永続化: directory（全10episode 94wav 実測）+ **kotobase.net（pi 9wav 実測、75 chunk）**。

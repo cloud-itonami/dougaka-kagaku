@@ -93,9 +93,12 @@ nbb --classpath src tools/synth_all.cljs
 nbb --classpath src tools/measure_audio.cljs --all
 
 # 生成物（合成音声/scene）を DataLad/git-annex で永続化（companion asset dataset →
-# kotoba-annex external special remote。既定 directory store でローカル完結、
-# kotobase.net は KOTOBASE_ENDPOINT + CACAO 認証で。大容量は git 履歴に入れない）
-nbb tools/persist_assets.cljs --all
+# kotoba-annex external special remote。大容量は git 履歴に入れない）
+nbb tools/persist_assets.cljs --all                        # directory store（ローカル）
+
+# kotobase.net に永続化（CACAO 自己 mint。鍵は自己生成なので token 受け渡し不要。
+# chunk=32KiB 自動。実測: pi episode 9 wav を kotobase.net に永続化・fsck 9/9 ok）
+KOTOBASE_ENDPOINT=https://kotobase.net nbb tools/persist_assets.cljs --all
 ```
 
 CI（`.github/workflows/ci.yml`）は push / PR で上記の nbb テスト + self-audit を
