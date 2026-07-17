@@ -1055,3 +1055,39 @@ synth_episode/daily_report）。produce と operate の両輪が揃った。
 
 **Next**: animal-power 2本目（ゾウの脚、:scaling-law）、全 episode 音声一括合成、
 または実 IO の画（kami render harness、重い）。
+
+## Iteration 27 — 2026-07-17
+
+**Build**:
+
+- 10本目 episode `content/elephant-legs.edn`（animal-power 2本目、「大きな動物ほど
+  なぜ脚が太くなるのか」）。nomi/ant と同じ :scaling-law だが**「拡大の上限＝
+  自壊」という別の問い**: 骨の応力 = 体重/骨断面積 ∝ L³/L² = L で、大きくするほど
+  骨の負担が線形に増える。全 claim = sim（length-ratio 57・断面積 3249・体重
+  185193）+ derived（骨応力 = 体重/断面積 = 57）。
+- **既存 :scaling-law solver をそのまま再利用**（新 solver 不要）。derived が
+  mass-ratio と area-ratio の同 sim case 内 2 出力の比を取り、骨応力 57 を機械
+  再計算。animal-power scene（既存）付きで全 stage 揃い、full-produce で
+  human-review SVG 自動出力、audit 100%。
+- produced.edn 追記。tests 106 green（episode 追加のみ、lib 不変）。audit
+  全10episode ALL PASS mean 99%。
+
+**Learn**:
+
+- **既存部品だけで episode を 1 本増やせた**（新 solver/scene/コードゼロ、
+  spec + 台本を書くだけ）。iter14 で観測した「部品が揃った series は episode
+  追加が spec 執筆だけ」が、animal-power で 2 本目でも成立。3 series
+  （moon-approach/animal-power/three-min-math）が各 2〜3 本になり、深さが出た。
+- 同じ :scaling-law を nomi（跳躍）/ ant（怪力）/ elephant（脚の太さ）の**3 つの
+  別の問い**に使えた。1 つの reduced-order solver が複数 episode を支える
+  = sim スタックの投資効率が高い（1 solver 実装 → N episode）。
+- derived の 3 例目の跨ぎ方: iter17 sim+constant、iter20 sim(別case)+sim(別case)、
+  今回 sim+sim（同 case 内の 2 出力）。derived が出所の組合せを問わず機能。
+
+**Measure**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 10本、全 stage 揃い 6本（tsuki/ant/pi/hyperloop/roche/elephant）。
+series 分布: moon-approach 2 / animal-power 2 / three-min-math 3 /
+future-tech 1 / everyday-mechanism 1。audit mean 99%。実 IO 音声のみ実測。
+
+**Next**: everyday-mechanism/future-tech の 2本目、全 episode 音声一括合成、
+または実 IO の画（kami render harness、重い）。

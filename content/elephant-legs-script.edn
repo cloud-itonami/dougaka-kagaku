@@ -1,0 +1,20 @@
+;; 台本 — content/elephant-legs.edn に対応。数値は全て {{claim-id}} placeholder。
+{:scenes
+ [{:location "草原・ゾウとネズミを並べて"
+   :action "太い柱のようなゾウの脚と、細いネズミの脚を対比"
+   :lines
+   [{:speaker "right" :text "ゾウの脚って、柱みたいに太いよね。ネズミはあんなに細いのに" :emotion "normal"}
+    {:speaker "left" :text "大きな動物ほど脚が太くなる。これにはちゃんと理由があるんだ" :emotion "normal"}
+    {:speaker "right" :text "ただ大きいから太い、じゃないの？" :emotion "surprised"}]}
+  {:location "シミュレーション空間・拡大"
+   :action "ネズミをそのままの形でゾウの大きさへ引き伸ばし、骨の断面と体積を色分け"
+   :lines
+   [{:speaker "left" :text "ネズミを形はそのまま、ゾウの大きさ、体長 {{size-up}} まで拡大してみよう" :emotion "normal"}
+    {:speaker "left" :text "脚の骨の断面積は {{area-up}} 。でも体重は {{mass-up}} にもなる" :emotion "normal"}
+    {:speaker "right" :text "体重の増え方だけ、けた違いに大きい！" :emotion "surprised"}]}
+  {:location "シミュレーション空間・骨が砕ける"
+   :action "細い脚のまま拡大した動物の骨に負担が集中し、ひび割れる"
+   :lines
+   [{:speaker "left" :text "だから骨一本にかかる負担は {{bone-stress}} に跳ね上がる。この細い脚じゃ折れてしまう" :emotion "normal"}
+    {:speaker "right" :text "同じ形のままじゃ、大きくなれないんだ" :emotion "sad"}
+    {:speaker "left" :text "そう。だから大きな動物ほど、脚を相対的に太くして負担を逃がしている。ゾウの柱みたいな脚は、その答えなんだ" :emotion "happy"}]}]}

@@ -1,0 +1,38 @@
+;; エピソード spec の実例 10 — 「大きな動物ほど、なぜ脚が太くなるのか」。
+;; animal-power 2 本目（nomi/ant と同じ相似則だが「拡大の上限＝自壊」の別角度）。
+;; 骨の応力 = 体重 / 骨の断面積 ∝ L³/L² = L。大きくするほど骨の負担が線形に増える。
+;; 全 claim は :scaling-law sim（length-ratio 57 = ネズミをゾウの大きさへ）+ derived。
+{:series :animal-power
+ :question "大きな動物ほど、どうして脚が太く頑丈になっていくのか？"
+ :duration-s 300
+ :claims
+ [{:id :size-up
+   :text "ネズミをゾウの大きさ、体長57倍にそのまま拡大してみる"
+   :value {:quantity 57.0 :unit "ratio"}
+   :source {:kind :sim :case :scale :output :length-ratio}}
+  {:id :area-up
+   :text "脚の骨の断面積は3249倍になる"
+   :value {:quantity 3249.0 :unit "ratio"}
+   :source {:kind :sim :case :scale :output :area-ratio}}
+  {:id :mass-up
+   :text "でも体重は18万5千倍にもふくれあがる"
+   :value {:quantity 185193.0 :unit "ratio"}
+   :source {:kind :sim :case :scale :output :mass-ratio}}
+  {:id :bone-stress
+   :text "その結果、骨1本にかかる負担は57倍に跳ね上がる"
+   :value {:quantity 57.0 :unit "ratio"}
+   :source {:kind :derived :op :ratio :from [:mass-up :area-up]}}]
+ :sim-cases
+ [{:id :scale
+   :solver {:kind :scaling-law}
+   :domain {:length-ratio 57.0
+            :note "ネズミ体長 ~7cm ÷ ゾウ ~4m。等方相似・同一骨材料と仮定。骨応力∝L"}
+   :outputs {:length-ratio {:unit "ratio"}
+             :area-ratio {:unit "ratio"}
+             :mass-ratio {:unit "ratio"}}}]
+ :beats
+ ["導入: ネズミの脚は細いのに、ゾウの脚は柱みたいに太い。なぜ？"
+  "拡大: ネズミをそのままの形でゾウの大きさに引き伸ばしてみる"
+  "sim: 断面積は L²、体重は L³。増え方の差を骨に重ねて可視化"
+  "答え: 骨の負担は体長に比例して増える。同じ形のままでは脚が折れる"
+  "まとめ: だから大きな動物ほど、脚を相対的に太くして負担を逃がしている"]}
