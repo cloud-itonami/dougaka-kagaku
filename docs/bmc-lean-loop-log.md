@@ -1176,3 +1176,46 @@ BS.1770 は重いので簡易 RMS 近似か要検討）。
 
 **Next**: loudness の簡易計測（wav PCM → RMS → LUFS 近似、正確版は重い）、
 台本の尺設計（目標尺に対する厚み）、または永続化（B2 asset store、owner 判断）。
+
+## Iteration 31 — 2026-07-17（永続化フェーズ）
+
+**Build**:
+
+- `tools/persist_assets.cljs` — kagaku の生成物（合成音声 wav・scene SVG）を
+  **DataLad/git-annex で永続化**するツール。companion な git-annex dataset
+  （素材台帳、source repo の git 履歴は汚さない）に annex 管理し、kotoba-annex の
+  external special remote（既定 directory store、KOTOBASE_ENDPOINT 設定時は
+  kotobase.net）へ copy。大容量は git 履歴に入れない（ADR-2607175000 / skill
+  large-binary-datalad と整合）。
+
+**Measure（実 git-annex で kagaku 素材の永続化を end-to-end 実証）**:
+
+- **全 10 episode の合成音声 94 wav を annex 永続化**: fsck 94/94 内容整合 OK、
+  remote block store に 93 ファイル永続化。
+- **94 → 93 は content-addressed の重複排除**（同一内容の line が 1 block を
+  共有）— git-annex + content-address の正しい挙動（実測で確認、捏造なし）。
+- directory store なので**認証不要でローカル完結**。前 turn までに: special
+  remote は実 git-annex で end-to-end 検証、kotobase-server の blob 面は実装 +
+  shadow-cljs テスト（28 tests/147 assert）で本番 main 着地。
+
+**Learn**:
+
+- 永続化が「設計・検証」から「kagaku の実素材を実際に永続化」まで到達
+  （オーナー指示「永続化を進めて」の実現）。special remote（transport）→
+  companion asset dataset（台帳）→ block store（実体）の 3 層が実 git-annex で
+  繋がった。
+- content-address の重複排除が実データで効いた（94 wav → 93 block）。同じ相槌
+  （「えっ」等の短い line）が内容一致で 1 block に集約された可能性 — 素材が
+  増えるほど dedup が効く（音声の使い回しに強い）。
+- kagaku の音声素材は VOICEVOX から再生成可能なので「真の source data」では
+  ないが、永続化パスの driving use case として機能。真に不可逆な source
+  （将来の reference sheets 等）が出たら同じパスで annex 管理する。
+
+**残り（owner-gated、正直に）**: kotobase.net への実書込 = worker(net-kotobase)の
+blob ルーティング配線 + 本番 deploy + CACAO 認証鍵。server の blob 面は着地済みで、
+残るは worker 配線・deploy・認証（ADR-2607175000 follow-up）。directory store /
+B2（m365 先例）は今すぐ運用可能。
+
+**Measure（続き）**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 10本、tools 10本。永続化: special remote 検証済み + kotobase blob 面着地 +
+kagaku 素材の実永続化実証（directory store）。

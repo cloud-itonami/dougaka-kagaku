@@ -1,0 +1,99 @@
+;; kagaku の生成物（合成音声 wav・scene SVG）を DataLad/git-annex で永続化する:
+;;   nbb tools/persist_assets.cljs [--all | <episode>] [--dataset DIR] [--remote-dir DIR]
+;; companion な git-annex dataset（素材の台帳。source repo の git 履歴は汚さない）に
+;; 素材を annex 管理し、kotoba-annex の external special remote（既定 directory store、
+;; KOTOBASE_ENDPOINT 設定時は kotobase.net）へ copy して永続化する。大容量バイナリは
+;; git 履歴に入れない（skill large-binary-datalad と整合、ADR-2607175000）。
+;;
+;; 前提: git-annex / datalad が install 済み、kotoba-annex の
+;; git-annex-remote-kotobase が PATH にあること（下の wrap-remote-on-path! が
+;; 一時 wrapper を用意する）。実 git-annex での往復・fsck は実測で検証済み。
+(ns persist-assets
+  (:require [clojure.string :as str]
+            ["child_process" :as cp]
+            ["fs" :as fs]
+            ["path" :as path]))
+
+(def args (vec *command-line-args*))
+(defn arg-val [flag default]
+  (if-let [i (some (fn [[i a]] (when (= a flag) i)) (map-indexed vector args))]
+    (nth args (inc i) default) default))
+
+(def scratch "/private/tmp/claude-501/-Users-junkawasaki-github-com-junkawasaki/80eb0bfa-400a-400a-8326-1ad3e8d37674/scratchpad")
+(def dataset (arg-val "--dataset" (str scratch "/kagaku-assets-ds")))
+(def remote-dir (arg-val "--remote-dir" (str scratch "/kagaku-annex-remote")))
+(def all? (some #(= "--all" %) args))
+(def only-ep (first (remove #(str/starts-with? % "--") args)))
+(def annex-remote-src "/Users/junkawasaki/github/com-junkawasaki/orgs/kotoba-lang/kotoba-annex")
+
+(defn sh [cmd opts]
+  (cp/execSync cmd (clj->js (merge {:cwd dataset :stdio "pipe"} opts))))
+(defn sh-ok [cmd opts]
+  (try (sh cmd opts) true (catch :default _ false)))
+
+(defn wrap-remote-on-path!
+  "kotoba-annex の special remote を叩く wrapper を用意し PATH に足す。
+   KOTOBASE_ENDPOINT 未設定なら directory store（KOTOBA_ANNEX_DIR）。"
+  []
+  (let [binw (str scratch "/annexbin")]
+    (fs/mkdirSync binw #js {:recursive true})
+    (fs/writeFileSync (str binw "/git-annex-remote-kotobase")
+                      (str "#!/bin/bash\nexec nbb --classpath " annex-remote-src
+                           "/src " annex-remote-src "/bin/git-annex-remote-kotobase.cljs\n"))
+    (fs/chmodSync (str binw "/git-annex-remote-kotobase") 0755)
+    {:PATH (str binw ":" js/process.env.PATH)
+     :KOTOBA_ANNEX_DIR remote-dir}))
+
+(def env (wrap-remote-on-path!))
+(def run-env
+  (let [e (js/Object.assign #js {} js/process.env)]
+    (set! (.-PATH e) (:PATH env))
+    (set! (.-KOTOBA_ANNEX_DIR e) (:KOTOBA_ANNEX_DIR env))
+    e))
+
+(defn ensure-dataset! []
+  (when-not (fs/existsSync (str dataset "/.git"))
+    (fs/mkdirSync dataset #js {:recursive true})
+    (sh "git init -q" {})
+    (sh "git annex init kagaku-assets -q" {:env run-env}))
+  (when-not (sh-ok "git annex info kotobase" {:env run-env})
+    (sh "git annex initremote kotobase type=external externaltype=kotobase encryption=none"
+        {:env run-env})))
+
+(defn asset-dirs []
+  (->> (fs/readdirSync scratch)
+       (filter #(str/starts-with? % "kagaku-audio-"))
+       (map #(str/replace % "kagaku-audio-" ""))
+       (filter #(or all? (= % only-ep)))
+       sort))
+
+(println "== kagaku 素材の永続化（DataLad/git-annex → special remote）")
+(println "   dataset:" dataset "\n   remote (directory store):" remote-dir "\n")
+
+(ensure-dataset!)
+(fs/mkdirSync (str dataset "/audio") #js {:recursive true})
+
+(def eps (asset-dirs))
+(when (empty? eps)
+  (println "   対象 episode 素材が無い（先に synth_all を実行 / --all 指定）")
+  (js/process.exit 0))
+
+(doseq [ep eps]
+  (let [src (str scratch "/kagaku-audio-" ep)
+        dst (str dataset "/audio/" ep)]
+    (sh (str "cp -r '" src "' '" dst "'") {:env run-env})))
+(sh "git annex add audio -q" {:env run-env})
+(sh-ok "git commit -q -m 'kagaku assets: narration wav (annex)'" {:env run-env})
+(sh "git annex copy audio --to kotobase" {:env run-env})
+
+;; 検証: fsck で内容整合、remote の永続化ファイル数
+(def fsck (str (sh "git annex fsck audio --fast 2>&1 | grep -c ok || true" {:env run-env :shell "/bin/bash"})))
+(def persisted (count (str/split-lines (str (sh (str "find '" remote-dir "' -type f 2>/dev/null || true") {:shell "/bin/bash"})))))
+
+(println "== 永続化完了")
+(println "   episode:" (count eps) "本 (" (str/join ", " eps) ")")
+(println "   fsck ok 行:" (str/trim fsck))
+(println "   remote block store の永続化ファイル数:" persisted)
+(when (str/blank? (str js/process.env.KOTOBASE_ENDPOINT))
+  (println "   ※ 現在は directory store（ローカル、認証不要）。kotobase.net へは"
+           "\n     KOTOBASE_ENDPOINT/graph 設定 + CACAO 認証（owner-gated、ADR-2607175000）。"))

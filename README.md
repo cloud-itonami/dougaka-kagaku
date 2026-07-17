@@ -91,6 +91,11 @@ nbb --classpath src tools/synth_all.cljs
 # 合成 wav の尺を計測 → factcheck の duration facts に供給（--all で全 episode）。
 # ナレーション尺は最終動画尺の下限（間・BGM・視覚が未加算）
 nbb --classpath src tools/measure_audio.cljs --all
+
+# 生成物（合成音声/scene）を DataLad/git-annex で永続化（companion asset dataset →
+# kotoba-annex external special remote。既定 directory store でローカル完結、
+# kotobase.net は KOTOBASE_ENDPOINT + CACAO 認証で。大容量は git 履歴に入れない）
+nbb tools/persist_assets.cljs --all
 ```
 
 CI（`.github/workflows/ci.yml`）は push / PR で上記の nbb テスト + self-audit を
