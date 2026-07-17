@@ -1091,3 +1091,44 @@ future-tech 1 / everyday-mechanism 1。audit mean 99%。実 IO 音声のみ実�
 
 **Next**: everyday-mechanism/future-tech の 2本目、全 episode 音声一括合成、
 または実 IO の画（kami render harness、重い）。
+
+## Iteration 28 — 2026-07-17
+
+**Build**:
+
+- `tools/synth_all.cljs` — **全 episode の台本音声を一括合成**。content の全
+  episode（台本あり）を順次、実 VOICEVOX（localhost:50021）で per-line wav 化し
+  episode 別ディレクトリに書き出す。episode も line も順次でエンジン過負荷を避ける。
+  未起動なら未確認で exit 0。失敗行は正直にカウント（推定で埋めない）。
+
+**Measure（全 episode 音声を実測）**:
+
+- **10/10 episode が全行合成成功、行 94/94、計 22.5 MB の wav**。各 episode
+  9〜12 行（nomi 12 / paper 10 / 他 9）。iter25 は pi 1 本のみだったが、
+  iter28 で全 10 本に拡大。
+- **kettle-whistle（citation PENDING で full-produce は factcheck :rejected の
+  episode）も台本音声は正しく合成できた**。「公開はブロックされるが台本の
+  素材（音声）は作れる」= factcheck gate（公開の可否）と素材生成（音声）が
+  独立していることを実地確認。human-review は素材を見聞きしてから公開を
+  判断する設計なので、reject 状態でも素材は揃えられるのが正しい。
+- tests 106 green（ツール追加のみ、lib 不変）。
+
+**Learn**:
+
+- iter5（pure planner）→ iter13（1行）→ iter25（1 episode 全行）→ iter28
+  （全 episode）と、voice の実 IO が段階的に実用範囲を広げた。**同じ
+  plan-script contract のまま**、対象を 1 行→1 本→全本にスケールしただけ
+  （新設計ゼロ）。純データ plan が「素材の一括生産」まで到達。
+- human-review 材料が全 10 episode で「数値 + 台本 + 絵(SVG) + 音(wav)」の
+  4 点揃った（scene 無し episode は絵が SVG でなく sim 数値+台本+音）。実運用の
+  human-review が全 episode で回せる状態。
+- 全合成 22.5 MB は scratchpad のみ（repo を汚さない、大容量バイナリは git に
+  入れない方針と整合）。実運用では B2/DataLad 経路（skill large-binary-datalad）
+  に載せるべき素材だが、本反復は実 IO 実証までで公開素材管理は別スコープ。
+
+**Measure（続き）**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 10本、全 episode 音声合成済み（94 行、22.5 MB）。tools 8本。実 IO:
+音声=全 episode 実合成、画=SVG のみ（authoritative WebGPU 未実測）。
+
+**Next**: future-tech/everyday-mechanism の 2本目、実 IO の画（kami render
+harness、重い）、または合成音声の尺計測 → factcheck の duration/loudness へ供給。

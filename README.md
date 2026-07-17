@@ -83,6 +83,10 @@ nbb --classpath src tools/synth_episode.cljs content/pi-monte-carlo.edn
 # チャンネル現況レポート（episode 数・series 分布・audit・sim ベンチ・次 topic・
 # 実 IO 到達状況を 1 コマンドで。既存部品の集約、新規 episode は作らない）
 nbb --classpath src tools/daily_report.cljs
+
+# 全 episode の台本音声を一括合成（順次、per-episode ディレクトリに wav。
+# エンジン localhost:50021 が無ければ未確認で exit 0）
+nbb --classpath src tools/synth_all.cljs
 ```
 
 CI（`.github/workflows/ci.yml`）は push / PR で上記の nbb テスト + self-audit を

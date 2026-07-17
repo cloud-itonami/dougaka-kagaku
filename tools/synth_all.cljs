@@ -1,0 +1,80 @@
+;; 全 episode の台本音声を一括合成（human-review 用音声を全部揃える）:
+;;   nbb --classpath src tools/synth_all.cljs
+;; content/*.edn（台本あり）を順次、実 VOICEVOX（localhost:50021）で per-line wav 化。
+;; citation PENDING で factcheck reject の episode も**台本自体は合成可能**なので全部。
+;; エンジンへ過負荷をかけないよう episode も line も順次。未起動なら未確認で exit 0。
+;; 失敗行は正直にカウント（推定で埋めない）。
+(ns synth-all
+  (:require [cljs.reader :as reader]
+            [clojure.string :as str]
+            [kagaku.script :as script]
+            [kagaku.voice :as voice]
+            ["fs" :as fs]))
+
+(def engine-url "http://127.0.0.1:50021")
+(def base "/private/tmp/claude-501/-Users-junkawasaki-github-com-junkawasaki/80eb0bfa-400a-400a-8326-1ad3e8d37674/scratchpad")
+
+(defn load-edn [p] (reader/read-string (fs/readFileSync p "utf8")))
+
+(def episodes
+  (->> (fs/readdirSync "content")
+       (filter #(str/ends-with? % ".edn"))
+       (remove #(str/ends-with? % "-script.edn"))
+       (filter #(fs/existsSync (str "content/" (str/replace % ".edn" "-script.edn"))))
+       sort))
+
+(defn synth-line [out-dir idx {:keys [ok speaker text audio-query-url synthesis-url]}]
+  (if-not ok
+    (js/Promise.resolve {:ok false})
+    (-> (js/fetch (str audio-query-url "?speaker=" speaker
+                       "&text=" (js/encodeURIComponent text)) #js {:method "POST"})
+        (.then (fn [r] (if (.-ok r) (.json r) (throw (js/Error. "audio_query")))))
+        (.then (fn [q] (js/fetch (str synthesis-url "?speaker=" speaker)
+                                 #js {:method "POST"
+                                      :headers #js {"Content-Type" "application/json"}
+                                      :body (js/JSON.stringify q)})))
+        (.then (fn [r] (if (.-ok r) (.arrayBuffer r) (throw (js/Error. "synthesis")))))
+        (.then (fn [buf]
+                 (fs/writeFileSync (str out-dir "/line-" (.padStart (str idx) 3 "0") ".wav")
+                                   (js/Buffer.from buf))
+                 {:ok true :bytes (.-length (js/Uint8Array. buf))}))
+        (.catch (fn [_] {:ok false})))))
+
+(defn synth-episode [f]
+  (let [ep (load-edn (str "content/" f))
+        sc (load-edn (str "content/" (str/replace f ".edn" "-script.edn")))
+        plans (voice/plan-script (script/expand sc (:claims ep)) {:engine-url engine-url})
+        out-dir (str base "/kagaku-audio-" (str/replace f ".edn" ""))]
+    (when-not (fs/existsSync out-dir) (fs/mkdirSync out-dir #js {:recursive true}))
+    (reduce (fn [p [idx pl]]
+              (.then p (fn [acc] (.then (synth-line out-dir idx pl) #(conj acc %)))))
+            (js/Promise.resolve []) (map-indexed vector plans))))
+
+(println "== 全 episode 音声一括合成 (" (count episodes) "本 )\n")
+
+(-> (js/fetch (str engine-url "/version"))
+    (.then (fn [r] (when-not (.-ok r) (throw (js/Error. "engine")))))
+    (.then (fn [_]
+             (reduce (fn [p f]
+                       (.then p (fn [acc]
+                                  (.then (synth-episode f)
+                                         (fn [rs]
+                                           (let [ok (count (filter :ok rs))
+                                                 bytes (reduce + (keep :bytes rs))]
+                                             (println (str "  " (str/replace f ".edn" "")
+                                                           ": " ok "/" (count rs) " 行、"
+                                                           bytes " bytes"))
+                                             (conj acc {:episode f :ok ok :total (count rs) :bytes bytes})))))))
+                     (js/Promise.resolve []) episodes)))
+    (.then (fn [results]
+             (let [lines-ok (reduce + (map :ok results))
+                   lines-total (reduce + (map :total results))
+                   bytes (reduce + (map :bytes results))
+                   full (count (filter #(= (:ok %) (:total %)) results))]
+               (println (str "\n== 実測: " full "/" (count results) " episode が全行合成成功、"
+                             "行 " lines-ok "/" lines-total "、計 "
+                             (.toFixed (/ bytes 1048576.0) 1) " MB の wav"))
+               (js/process.exit (if (= lines-ok lines-total) 0 1)))))
+    (.catch (fn [e]
+              (println (str "\n== 未確認: VOICEVOX engine 未到達（" (.-message e) "）"))
+              (js/process.exit 0))))
