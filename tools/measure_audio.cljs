@@ -1,0 +1,83 @@
+;; 合成済み wav の尺を計測し、factcheck の duration facts に供給:
+;;   nbb --classpath src tools/measure_audio.cljs [content/pi-monte-carlo.edn | --all]
+;; scratchpad の kagaku-audio-<episode>/line-*.wav の RIFF ヘッダを読み、
+;; PCM data チャンクのバイト数から各 line の尺を算出して episode 合計尺を出す。
+;; ⚠ ナレーション尺は最終動画尺の**下限**（間・BGM・視覚ビートが未加算）。
+;; そのまま check-duration に通すと過小評価になるので、その旨を明示する。
+(ns measure-audio
+  (:require [clojure.string :as str]
+            [kagaku.audio :as audio]
+            [kagaku.factcheck :as factcheck]
+            ["fs" :as fs]))
+
+(def base "/private/tmp/claude-501/-Users-junkawasaki-github-com-junkawasaki/80eb0bfa-400a-400a-8326-1ad3e8d37674/scratchpad")
+
+(defn u32le [buf off]
+  (+ (aget buf off) (* 256 (aget buf (+ off 1)))
+     (* 65536 (aget buf (+ off 2))) (* 16777216 (aget buf (+ off 3)))))
+(defn u16le [buf off] (+ (aget buf off) (* 256 (aget buf (+ off 1)))))
+
+(defn wav-info
+  "RIFF/PCM wav の {:sample-rate :channels :bits-per-sample :data-bytes} を返す。
+   data チャンクを走査（36 固定でなく 'data' を探す）。"
+  [path]
+  (let [buf (js/Uint8Array. (fs/readFileSync path))
+        channels (u16le buf 22)
+        sample-rate (u32le buf 24)
+        bits (u16le buf 34)
+        ;; 'data' サブチャンクを走査
+        find-data (fn [start]
+                    (loop [i start]
+                      (if (>= i (- (.-length buf) 8))
+                        nil
+                        (if (and (= (aget buf i) 100)       ; d
+                                 (= (aget buf (+ i 1)) 97)  ; a
+                                 (= (aget buf (+ i 2)) 116) ; t
+                                 (= (aget buf (+ i 3)) 97)) ; a
+                          (u32le buf (+ i 4))
+                          (recur (inc i))))))]
+    {:sample-rate sample-rate :channels channels :bits-per-sample bits
+     :data-bytes (or (find-data 12) 0)}))
+
+(defn episode-duration [ep-name]
+  (let [dir (str base "/kagaku-audio-" ep-name)]
+    (when (fs/existsSync dir)
+      (let [wavs (->> (fs/readdirSync dir)
+                      (filter #(str/ends-with? % ".wav")) sort
+                      (map #(wav-info (str dir "/" %))))]
+        {:episode ep-name :lines (count wavs)
+         :duration-s (audio/total-duration-s wavs)}))))
+
+(def args (vec *command-line-args*))
+(def all? (some #(= "--all" %) args))
+
+(defn ep-name-of [p] (-> p (.split "/") last (.replace ".edn" "")))
+
+(def targets
+  (if all?
+    (->> (fs/readdirSync "content")
+         (filter #(and (str/ends-with? % ".edn")
+                       (not (str/ends-with? % "-script.edn"))))
+         (map #(str/replace % ".edn" "")) sort)
+    [(ep-name-of (or (first (remove #(str/starts-with? % "--") args))
+                     "content/pi-monte-carlo.edn"))]))
+
+(println "== ナレーション尺の実測（合成 wav から）")
+(println "   ⚠ ナレーション尺 = 最終動画尺の下限（間・BGM・視覚が未加算）\n")
+
+(def results (keep episode-duration targets))
+(doseq [{:keys [episode lines duration-s]} results]
+  (let [gate (factcheck/check-duration {:render {:duration-s duration-s}})]
+    (println (str "  " episode ": " lines " 行 / "
+                  (.toFixed duration-s 1) " 秒"
+                  "  → check-duration(120–720s): "
+                  (if (:ok? gate) "PASS" "下限未満（ナレーションのみ）")))))
+
+(when (empty? results)
+  (println "  （合成 wav が無い。先に synth_all を実行）"))
+
+(println (str "\n== 合計ナレーション: "
+              (.toFixed (reduce + (map :duration-s results)) 1) " 秒"
+              " / " (count results) " episode"))
+(println "   duration gate に実データ（音声尺）を供給できることを実証。ただし"
+         "\n   これは下限で、最終動画尺は間・BGM・視覚ビートで長くなる（未計測=unknown）。")

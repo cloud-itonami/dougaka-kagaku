@@ -87,6 +87,10 @@ nbb --classpath src tools/daily_report.cljs
 # 全 episode の台本音声を一括合成（順次、per-episode ディレクトリに wav。
 # エンジン localhost:50021 が無ければ未確認で exit 0）
 nbb --classpath src tools/synth_all.cljs
+
+# 合成 wav の尺を計測 → factcheck の duration facts に供給（--all で全 episode）。
+# ナレーション尺は最終動画尺の下限（間・BGM・視覚が未加算）
+nbb --classpath src tools/measure_audio.cljs --all
 ```
 
 CI（`.github/workflows/ci.yml`）は push / PR で上記の nbb テスト + self-audit を

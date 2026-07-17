@@ -1,0 +1,23 @@
+(ns kagaku.audio-test
+  (:require [clojure.test :refer [deftest is testing]]
+            [kagaku.audio :as audio]))
+
+(deftest pcm-duration
+  (testing "24kHz 16bit mono: 48000 bytes/sec → 48000 data-bytes = 1 秒"
+    (is (= 1.0 (audio/pcm-duration-s {:sample-rate 24000 :channels 1
+                                      :bits-per-sample 16 :data-bytes 48000}))))
+  (testing "半分のバイト = 0.5 秒"
+    (is (= 0.5 (audio/pcm-duration-s {:sample-rate 24000 :channels 1
+                                      :bits-per-sample 16 :data-bytes 24000}))))
+  (testing "44.1kHz stereo 16bit: 176400 bytes/sec"
+    (is (= 1.0 (audio/pcm-duration-s {:sample-rate 44100 :channels 2
+                                      :bits-per-sample 16 :data-bytes 176400})))))
+
+(deftest total-duration
+  (is (= 3.0 (audio/total-duration-s
+              [{:sample-rate 24000 :channels 1 :bits-per-sample 16 :data-bytes 48000}
+               {:sample-rate 24000 :channels 1 :bits-per-sample 16 :data-bytes 96000}]))))
+
+(deftest zero-byte-rate-safe
+  (is (= 0.0 (audio/pcm-duration-s {:sample-rate 0 :channels 1
+                                    :bits-per-sample 16 :data-bytes 1000}))))

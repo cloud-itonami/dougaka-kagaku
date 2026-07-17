@@ -1132,3 +1132,47 @@ episode 10本、全 episode 音声合成済み（94 行、22.5 MB）。tools 8�
 
 **Next**: future-tech/everyday-mechanism の 2本目、実 IO の画（kami render
 harness、重い）、または合成音声の尺計測 → factcheck の duration/loudness へ供給。
+
+## Iteration 29 — 2026-07-17
+
+**Build**:
+
+- `kagaku.audio`（純関数）— PCM wav の尺 = data-bytes / (sample-rate ×
+  channels × bytes/sample)。IO なし、テスト可能。
+- `tools/measure_audio.cljs` — 合成済み wav の RIFF ヘッダを走査（'data'
+  サブチャンクを固定 offset でなく検索）して各 line の尺を算出、episode 合計を出す。
+  factcheck/check-duration に**実測の尺**を渡す。
+- tests 106→109（249 assertions）green。
+
+**Measure（実 IO の音声尺を factcheck に接続、実データで実証）**:
+
+- **全 10 episode のナレーション尺を実測**（合成 wav から、24kHz 16bit mono）:
+  42.7〜61.9 秒/本、合計 491.4 秒。
+- **重要な発見: 全 episode がナレーションのみでは duration gate（120–720s）の
+  下限未満**。台本 9〜12 行のナレーションは ~45–60 秒で、目標尺（180–300s、
+  three-min は 180s）の 1/4〜1/3 しかない。最終動画は間・BGM・視覚ビートで
+  伸びるが、**台本だけでは目標尺に足りない**という content-design の実データ
+  シグナル。これは今まで render facts が :awaiting-exec で見えなかった情報。
+- render facts の一部（尺）が **render 前に実データで測れる**ことを実証
+  （音声尺は render を待たずに出る部分的 render fact）。ただしこれは下限で、
+  最終動画尺は未計測（unknown）— そのまま check-duration に通すと過小評価に
+  なるので、ツール出力・BMC に明示。
+
+**Learn**:
+
+- 実 IO（音声）を factcheck gate（duration）に繋いだ初の反復。**「測れる部分は
+  実データ、測れない部分は unknown と明示」**を貫いた: ナレーション尺は実測、
+  最終動画尺は unknown、その差（間・BGM・視覚）も unknown。過小評価の尺で
+  gate を「通った」と偽らない。
+- 副産物の content 知見: **台本が目標尺に対して短い**。3〜5 分動画なら、今の
+  台本（9〜12 行）は視覚パート・間・BGM で 3〜4 倍に膨らむ前提。実運用では
+  台本を厚くするか、視覚 sim パートの尺設計が要る（follow-up）。純データ経路を
+  実 IO に繋いで初めて見えた実態。
+
+**Measure（続き）**: 動画公開数 0 / チャンネル未開設 / 収益 $0（変化なし）。
+episode 10本、tools 9本。実 IO: 音声=全 episode 合成 + **尺を factcheck に接続**、
+画=SVG のみ。render facts のうち尺は実データ化、loudness は未実装（次回、
+BS.1770 は重いので簡易 RMS 近似か要検討）。
+
+**Next**: loudness の簡易計測（wav PCM → RMS → LUFS 近似、正確版は重い）、
+台本の尺設計（目標尺に対する厚み）、または永続化（B2 asset store、owner 判断）。

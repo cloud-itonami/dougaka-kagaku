@@ -1,0 +1,19 @@
+(ns kagaku.audio
+  "合成 wav の尺（duration）計算。純関数（byte 数からの算術のみ、IO なし）。
+   実ファイル読取は :exec 側（tools/measure_audio.cljs）。
+
+   目的: 合成済みナレーション wav の実尺を出し、factcheck の check-duration
+   （render 後の facts）に**部分的な実データ**として供給する。ただし
+   ナレーション尺は最終動画尺の**下限**（間・BGM・視覚ビートが加わる前）なので、
+   そのまま duration gate に通すと過小評価になる — 呼び出し側で明示する。")
+
+(defn pcm-duration-s
+  "PCM wav の尺（秒）= data-bytes / (sample-rate × channels × bytes/sample)。"
+  [{:keys [sample-rate channels bits-per-sample data-bytes]}]
+  (let [byte-rate (* sample-rate channels (quot bits-per-sample 8))]
+    (if (pos? byte-rate) (/ (double data-bytes) byte-rate) 0.0)))
+
+(defn total-duration-s
+  "複数 wav の尺（秒）の合計。各要素は pcm-duration-s の引数 map。"
+  [wavs]
+  (reduce + (map pcm-duration-s wavs)))
