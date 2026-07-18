@@ -102,7 +102,11 @@ KOTOBASE_ENDPOINT=https://kotobase.net nbb tools/persist_assets.cljs --all
 ```
 
 CI（`.github/workflows/ci.yml`）は push / PR で上記の nbb テスト + self-audit を
-回し、episode 追加時の回帰を機械保証する。
+回し、episode 追加時の回帰を機械保証する。加えて、整数で閉じる分→秒の換算は
+`kotoba/` の2モジュール closed project として native Kotoba CLI で検査・JS
+transpile・実行する。`units.cljc` の文字列テーブル、keyword、浮動小数、nil を伴う
+汎用換算は Kotoba の安全な値モデルが未対応のため genuine `.cljc` として残す。
+これは拡張子だけを置換する移行ではない。
 
 実 IO（solver 実行 / VOICEVOX / ComfyUI / YouTube / D1）はこのリポジトリに
 置かない。yukkuri と同じく実行系は `:exec` 側（cae.solver hosts / murakumo

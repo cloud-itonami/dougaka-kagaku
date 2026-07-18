@@ -1,0 +1,4 @@
+(ns kotoba.gftd.kagaku.time-constants
+  (:export [seconds-per-minute]))
+
+(defn seconds-per-minute [] 60)
