@@ -1,0 +1,6 @@
+(ns kotoba.gftd.kagaku.time-units
+  (:require [kotoba.gftd.kagaku.time-constants :as constants])
+  (:export [minutes-to-seconds]))
+
+(defn minutes-to-seconds [minutes]
+  (* minutes (constants/seconds-per-minute)))

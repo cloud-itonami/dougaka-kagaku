@@ -1,0 +1,7 @@
+{:kotoba.project/root kotoba.gftd.kagaku.time-units
+ :kotoba.project/modules
+ {kotoba.gftd.kagaku.time-units "kotoba/time_units.kotoba"
+  kotoba.gftd.kagaku.time-constants "kotoba/time_constants.kotoba"}
+ :kotoba.project/package-lock "kotoba.lock.edn"
+ :kotoba.project/trust "kotoba.trust.edn"
+ :kotoba.project/dependency-manifests {}}
