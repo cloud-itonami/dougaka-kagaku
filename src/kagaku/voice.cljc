@@ -13,7 +13,7 @@
 
    実 IO（/audio_query → /synthesis の 2 段 POST、または ADR-2607131645 の
    murakumo 公開 /v1/audio/speech）は :exec 側。ここは何を叩くかの計画のみ。"
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 ;; ── style_id カタログ（yukkuri と同期。emotion off が既定＝声色を安定させる）──
 (def speaker-left-default 2)   ; 四国めたん ノーマル

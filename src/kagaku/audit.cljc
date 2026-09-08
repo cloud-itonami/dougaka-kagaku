@@ -11,7 +11,7 @@
      （iteration 9 で実 run 表示まで気付かなかった unit drift を spec 時点で捕える）
    - scene-sim-linked: scene が sim パラメータと連動しているか
    - claim-coverage: 全数値 claim が台本で言及されるか"
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [kagaku.scenario :as scenario]
             [kagaku.script :as script]
             [kagaku.derived :as derived]

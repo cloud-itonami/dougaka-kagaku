@@ -1,6 +1,6 @@
 (ns kagaku.script-test
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [kagaku.script :as script]))
 
 (def claims

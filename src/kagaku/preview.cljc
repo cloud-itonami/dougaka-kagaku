@@ -11,7 +11,7 @@
 
    投影は正射影の正面ビュー（world x→screen x, world y→screen y, z 破棄）。
    kagaku の scene は x 軸配置（地球-月 / 実物大-拡大）なので正面ビューで足りる。"
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             #?(:clj [clojure.edn :as edn] :cljs [cljs.reader :as edn])))
 
 (defn- inline-data [snapshot asset-id]
