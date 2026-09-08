@@ -9,7 +9,7 @@
 ;; git-annex-remote-kotobase が PATH にあること（下の wrap-remote-on-path! が
 ;; 一時 wrapper を用意する）。実 git-annex での往復・fsck は実測で検証済み。
 (ns persist-assets
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             ["child_process" :as cp]
             ["fs" :as fs]
             ["path" :as path]))

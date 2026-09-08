@@ -4,7 +4,7 @@
 ;; 検査して findings を表示。1 つでも pass? が false なら exit 1（CI ゲート）。
 (ns audit
   (:require [cljs.reader :as reader]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [kagaku.audit :as audit]
             ["fs" :as fs]))
 

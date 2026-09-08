@@ -5,7 +5,7 @@
 ;; ⚠ ナレーション尺は最終動画尺の**下限**（間・BGM・視覚ビートが未加算）。
 ;; そのまま check-duration に通すと過小評価になるので、その旨を明示する。
 (ns measure-audio
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [kagaku.audio :as audio]
             [kagaku.factcheck :as factcheck]
             ["fs" :as fs]))

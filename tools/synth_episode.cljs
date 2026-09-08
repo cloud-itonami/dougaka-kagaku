@@ -7,7 +7,7 @@
 ;; エンジン未起動なら「未確認」と正直に報告して exit 0（環境依存で実害でない）。
 (ns synth-episode
   (:require [cljs.reader :as reader]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [kagaku.script :as script]
             [kagaku.voice :as voice]
             ["fs" :as fs]))

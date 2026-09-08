@@ -5,7 +5,7 @@
 ;; エンジン未起動/接続不可なら「未確認」と正直に報告して exit 0（環境依存で実害でない）。
 ;; 鍵不要（localhost）。fetch 使用。生成 wav は scratchpad に書く（repo を汚さない）。
 (ns try-voice
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [kagaku.voice :as voice]
             ["fs" :as fs]))
 
