@@ -1,6 +1,6 @@
 (ns kagaku.voice-test
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [kagaku.voice :as voice]
             [kagaku.script :as script]))
 

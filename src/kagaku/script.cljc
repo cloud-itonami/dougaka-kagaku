@@ -11,7 +11,7 @@
      LLM は数値を一度も書かない — 書けるのは claim への参照だけ。
    - episode の数値 claim はすべて台本のどこかで言及されなければならない
      （言及されない数値主張は description/telop にも出せない = 死に claim）。"
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def speakers #{"left" "right"})
 (def emotions #{"normal" "happy" "surprised" "sad" "angry"})

@@ -20,7 +20,7 @@
                         | {:kind :citation :ref str}}]
     :sim-cases [case]                  ; kagaku.simcase/validate-case に適合
     :beats    [str]}                   ; 絵コンテ/展開ビート（自由記述）"
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def series
   "series カタログ（SSoT。resources/series.edn は topic カタログ側）。"

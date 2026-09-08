@@ -20,7 +20,7 @@
     :metadata    {:made-for-kids bool :description str
                   :sim-disclosure bool :voice kw}
     :human-approved {:by str :at str}}     ; オーナー承認（publish 前提条件）"
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [kagaku.derived :as derived]
             [kagaku.scenario :as scenario]
             [kagaku.simcase :as simcase]))
