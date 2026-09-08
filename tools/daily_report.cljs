@@ -5,7 +5,7 @@
 ;; 全て実データ由来（audit-all / bench 台帳 / compose）— 捏造ゼロ、推定値は出さない。
 (ns daily-report
   (:require [cljs.reader :as reader]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [kagaku.audit :as audit]
             [kagaku.scene :as scene]
             [kagaku.compose :as compose]

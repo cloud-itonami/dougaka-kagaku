@@ -6,7 +6,7 @@
 ;; 失敗行は正直にカウント（推定で埋めない）。
 (ns synth-all
   (:require [cljs.reader :as reader]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [kagaku.script :as script]
             [kagaku.voice :as voice]
             ["fs" :as fs]))

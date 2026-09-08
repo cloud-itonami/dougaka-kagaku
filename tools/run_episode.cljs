@@ -9,7 +9,7 @@
 (ns run-episode
   (:require [cljs.reader :as reader]
             [clojure.pprint :refer [pprint]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [kagaku.derived :as derived]
             [kagaku.rom :as rom]
             [kagaku.scenario :as scenario]
