@@ -1,5 +1,5 @@
 ;; 「次に何を作るか」を機械選定する（compose stage の上流ツール）:
-;;   nbb --classpath src tools/next_topic.cljs [series] [--last <series>]
+;;   nbb --classpath src tools/next_topic.cljk [series] [--last <series>]
 ;; resources/series.edn のカタログ + docs/produced.edn（作成済み topic-id の
 ;; append-only リスト、無ければ空）から priorityScore + series ローテーションで
 ;; 次の topic を 1 件選び、episode 種を表示する。決定論（乱数・時刻なし）。

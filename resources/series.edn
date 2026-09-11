@@ -1,5 +1,5 @@
 ;; series カタログ — 各 series の topic 候補と使う solver kind。
-;; series id の SSoT は src/kagaku/scenario.cljc の `series`（ここは topic カタログ）。
+;; series id の SSoT は src/kagaku/scenario.cljk の `series`（ここは topic カタログ）。
 ;; topic は compose stage が priorityScore（yukkuri topics.cljc 方式）で選定する。
 {:moon-approach
  {:title "もし月が地球に近づいたら"

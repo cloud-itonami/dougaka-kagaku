@@ -1,5 +1,5 @@
 ;; kagaku の生成物（合成音声 wav・scene SVG）を DataLad/git-annex で永続化する:
-;;   nbb tools/persist_assets.cljs [--all | <episode>] [--dataset DIR] [--remote-dir DIR]
+;;   nbb tools/persist_assets.cljk [--all | <episode>] [--dataset DIR] [--remote-dir DIR]
 ;; companion な git-annex dataset（素材の台帳。source repo の git 履歴は汚さない）に
 ;; 素材を annex 管理し、kotoba-annex の external special remote（既定 directory store、
 ;; KOTOBASE_ENDPOINT 設定時は kotobase.net）へ copy して永続化する。大容量バイナリは

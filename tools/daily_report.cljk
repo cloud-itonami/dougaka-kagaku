@@ -1,5 +1,5 @@
 ;; チャンネル現況レポート（ADR Phase C の運転可視化基盤）:
-;;   nbb --classpath src tools/daily_report.cljs
+;;   nbb --classpath src tools/daily_report.cljk
 ;; 既存部品を集約して「今チャンネルに何本あり、どの series が揃い、次に何を作り、
 ;; sim スタックの性能はどうか」を 1 コマンドで出す。新規 episode は作らない。
 ;; 全て実データ由来（audit-all / bench 台帳 / compose）— 捏造ゼロ、推定値は出さない。

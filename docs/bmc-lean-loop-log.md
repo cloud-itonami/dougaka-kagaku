@@ -15,7 +15,7 @@ superproject の共有 BMC システム（`70-tools/bmc/`、gftdcojp 11 プロ�
   scenario/simcase/factcheck/pipeline、nbb 26→35 tests green）。
 - `kagaku.rom`（reduced-order solver: :tidal-scaling / :two-body-orbit /
   :scaling-law / :numeric-experiment）を実装 — Phase A の sim 経路が実際に動く。
-- E2E runner（`tools/run_episode.cljs`）で `content/tsuki-half-distance.edn` を
+- E2E runner（`tools/run_episode.cljk`）で `content/tsuki-half-distance.edn` を
   実走: scenario validate OK / claim-consistency 全 OK（周期 claim 9.66 日 vs
   sim 9.6466 日、相対誤差 0.14% ≤ 2% gate）/ 定数出典 OK / bench datom 台帳
   初回 append（`docs/sim-benchmark-ledger.edn`）。
@@ -292,7 +292,7 @@ render 後の測定・人間レビュー・publish は実 render 待ちで unkno
   series.edn 形（{:series {:topics [{:id :q :priority}]}}）に合わせ、さらに
   **series ローテーション**（直近 series を penalty で軽く後回し、圧倒的高
   priority は覆さない）を追加。決定論（乱数・時刻なし、tie は series名→id 順）。
-- `tools/next_topic.cljs` — 「次に何を作るか」を機械選定するツール。
+- `tools/next_topic.cljk` — 「次に何を作るか」を機械選定するツール。
   resources/series.edn + docs/produced.edn（作成済み topic-id の append-only
   リスト）から次 topic を選び episode 種を表示。
 - `docs/produced.edn` 新設（tsuki=moon-half-distance, nomi=flea-jump 登録）。
@@ -376,7 +376,7 @@ sim スタック性能の本格シグナルにはまだ遠い）。実 IO 未配
   :sim claim の unit が sim-case の宣言 output unit と一致するかを検査。
   iter9 では unit drift を実 run の表示まで気付かなかったが、この axis は
   spec 時点（run 前）で捕える。
-- `tools/audit.cljs` — content/*.edn 全 episode を 1 コマンド検査する CI runner。
+- `tools/audit.cljk` — content/*.edn 全 episode を 1 コマンド検査する CI runner。
   1 つでも pass? false なら exit 1。tests 82→89（183 assertions）green。
 - 全 3 episode で実行: tsuki 100% / pi 100% / nomi 90%（citation PENDING を
   正しく可視化、pass? は落とさない＝人間確認待ちは正常状態）。ALL PASS、
@@ -410,8 +410,8 @@ episode 3本、self-audit mean-score 97%（citation 2件 PENDING が唯一の減
 
 **Build**:
 
-- `.github/workflows/ci.yml` — push / PR で nbb テスト（test/run.cljs）+
-  episode 横断 self-audit（tools/audit.cljs）を回す CI。既存の
+- `.github/workflows/ci.yml` — push / PR で nbb テスト（test/run.cljk）+
+  episode 横断 self-audit（tools/audit.cljk）を回す CI。既存の
   kotoba-lang/design-quality の ci.yml を参照して形式を合わせた（setup-node +
   nbb 第一経路）。
 - README に self-audit / full-produce E2E / next_topic の実行例と CI の説明を追記。
@@ -420,9 +420,9 @@ episode 3本、self-audit mean-score 97%（citation 2件 PENDING が唯一の減
 
 **Learn（実際に発火した実害 1 件）**:
 
-- **`npx --yes nbb --classpath src:test test/run.cljs` が失敗**。npx が
-  スラッシュ入りスクリプトパス `test/run.cljs` を **パッケージ名
-  `github:test/run.cljs` と誤解**して install を試み、コケた（design-quality の
+- **`npx --yes nbb --classpath src:test test/run.cljk` が失敗**。npx が
+  スラッシュ入りスクリプトパス `test/run.cljk` を **パッケージ名
+  `github:test/run.cljk` と誤解**して install を試み、コケた（design-quality の
   ci.yml は `-m ns.name` 形式だったのでこの罠を踏んでいなかった）。
   対処: CI で `npm install -g nbb` してから `nbb` を直接呼ぶ形に変更。
   ローカルの nbb（install 済み）は最初から直接呼んでいたので緑で、npx 経路
@@ -448,7 +448,7 @@ CI と同一の nbb コマンドが緑であることのみ確認済み**。無�
   GitHub Actions 上の実行は repo 設定で無効なので実緑は得られていない（unknown
   でなく、明確に「動かない」）。** 無人運転の自動品質ゲートにするには (a) repo の
   Actions を有効化する（オーナー操作）か (b) ローカル/cron 側で
-  `nbb tools/audit.cljs` を回す運用にする、のどちらかが要る。follow-up。
+  `nbb tools/audit.cljk` を回す運用にする、のどちらかが要る。follow-up。
 - workflow file 自体は正しい（ローカルで同一コマンド緑を確認済み）ので、
   Actions を有効化すれば動く見込み。yml は残置し、有効化を follow-up とする。
 
@@ -493,7 +493,7 @@ mean-score 97% 維持。実 IO 未配線は変わらず。
 
 **Build**:
 
-- `tools/try_voice.cljs` — VOICEVOX 実 IO 実験ツール（実 IO 配線の最初の一歩）。
+- `tools/try_voice.cljk` — VOICEVOX 実 IO 実験ツール（実 IO 配線の最初の一歩）。
   kagaku.voice/line-plan が返す audio-query-url/synthesis-url を実際に叩き、
   1 行を wav 化して bytes 長・RIFF header を報告。エンジン未起動なら「未確認」で
   exit 0（環境依存で実害でない設計）。
@@ -596,7 +596,7 @@ scene、または 5本目 episode（next_topic 推奨: everyday-mechanism kettle
   env clear を背景色に落とす。repo-wide 3D 規則が**明示的に許可する
   『thumbnail / diagram / 非3D preview』例外**に限定し、docstring・SVG コメント・
   ツール出力の 3 箇所で「authoritative render は WebGPU/kami-engine」と明記。
-- `tools/try_render.cljs` — episode の scene を SVG に書き出す。tsuki で実行:
+- `tools/try_render.cljk` — episode の scene を SVG に書き出す。tsuki で実行:
   地球（青大円 cx=0 r=6.371）+ 月（灰小円 cx=192.2=半分の距離 r=1.737）、
   背景 env clear、502 bytes の妥当な SVG。sim distance-ratio がサムネイル上の
   月位置に正しく反映（絵が sim 連動）。
@@ -976,7 +976,7 @@ fold/pi/double-pendulum の 3）。audit mean 99%。実 IO は音声のみ実測
 
 **Build**:
 
-- `tools/synth_episode.cljs` — episode の**台本全行を実 VOICEVOX で合成**
+- `tools/synth_episode.cljk` — episode の**台本全行を実 VOICEVOX で合成**
   （iter13 の try_voice を 1 行→全行に拡張）。展開済み台本（script/expand、
   数値は claim から転記済み）の各 line を plan-script → localhost:50021 で
   per-line wav 化し scratchpad の episode 別ディレクトリに書き出す。順次合成で
@@ -1016,7 +1016,7 @@ episode 9本。実 IO: 音声=**episode 単位で全行実合成まで実測**�
 
 **Build**:
 
-- `tools/daily_report.cljs` — **チャンネル現況レポート**（ADR Phase C の運転
+- `tools/daily_report.cljk` — **チャンネル現況レポート**（ADR Phase C の運転
   可視化基盤）。既存部品を集約し 1 コマンドで:
   - episode 総数 + series 分布 + series 別 scene 被覆
   - audit-all サマリ（ALL PASS / mean-score、100% 未満 episode の findings）
@@ -1096,7 +1096,7 @@ future-tech 1 / everyday-mechanism 1。audit mean 99%。実 IO 音声のみ実�
 
 **Build**:
 
-- `tools/synth_all.cljs` — **全 episode の台本音声を一括合成**。content の全
+- `tools/synth_all.cljk` — **全 episode の台本音声を一括合成**。content の全
   episode（台本あり）を順次、実 VOICEVOX（localhost:50021）で per-line wav 化し
   episode 別ディレクトリに書き出す。episode も line も順次でエンジン過負荷を避ける。
   未起動なら未確認で exit 0。失敗行は正直にカウント（推定で埋めない）。
@@ -1139,7 +1139,7 @@ harness、重い）、または合成音声の尺計測 → factcheck の durati
 
 - `kagaku.audio`（純関数）— PCM wav の尺 = data-bytes / (sample-rate ×
   channels × bytes/sample)。IO なし、テスト可能。
-- `tools/measure_audio.cljs` — 合成済み wav の RIFF ヘッダを走査（'data'
+- `tools/measure_audio.cljk` — 合成済み wav の RIFF ヘッダを走査（'data'
   サブチャンクを固定 offset でなく検索）して各 line の尺を算出、episode 合計を出す。
   factcheck/check-duration に**実測の尺**を渡す。
 - tests 106→109（249 assertions）green。
@@ -1181,7 +1181,7 @@ BS.1770 は重いので簡易 RMS 近似か要検討）。
 
 **Build**:
 
-- `tools/persist_assets.cljs` — kagaku の生成物（合成音声 wav・scene SVG）を
+- `tools/persist_assets.cljk` — kagaku の生成物（合成音声 wav・scene SVG）を
   **DataLad/git-annex で永続化**するツール。companion な git-annex dataset
   （素材台帳、source repo の git 履歴は汚さない）に annex 管理し、kotoba-annex の
   external special remote（既定 directory store、KOTOBASE_ENDPOINT 設定時は
