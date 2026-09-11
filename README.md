@@ -55,50 +55,50 @@ AI は計算を時々、堂々と間違える。そこで台本中の**すべて
 
 ```bash
 # テスト（nbb が第一経路。JVM は互換）
-nbb --classpath src:test test/run.cljk
-clojure -M:test
+kbb --backend sci --classpath src:test test/run.cljk
+kbb -M:test
 
 # episode 横断 self-audit（全 content/*.edn の健全性を機械検査、CI ゲート）
-nbb --classpath src tools/audit.cljk
+kbb --backend sci --classpath src tools/audit.cljk
 
 # 1 episode を full-produce E2E（compose→…→render-video の純データ経路を畳む）
 # scene が付く episode は human-review 用 SVG も scratchpad に自動書き出し
-nbb --classpath src tools/run_episode.cljk content/tsuki-half-distance.edn
+kbb --backend sci --classpath src tools/run_episode.cljk content/tsuki-half-distance.edn
 
 # 次に作る topic を選定（priorityScore + series ローテーション）
-nbb --classpath src tools/next_topic.cljk
+kbb --backend sci --classpath src tools/next_topic.cljk
 
 # VOICEVOX 実 IO 実験（voice plan の contract が実エンジンで通るか実測。
 # エンジン localhost:50021 が無ければ「未確認」と報告して exit 0）
-nbb --classpath src tools/try_voice.cljk "セリフ" [--speaker N]
+kbb --backend sci --classpath src tools/try_voice.cljk "セリフ" [--speaker N]
 
 # scene の 2D サムネイル（human-review 用。非-authoritative。
 # authoritative render は WebGPU/kami-engine で本ツールは配置プレビューのみ）
-nbb --classpath src tools/try_render.cljk content/tsuki-half-distance.edn [out.svg]
+kbb --backend sci --classpath src tools/try_render.cljk content/tsuki-half-distance.edn [out.svg]
 
 # 台本全行を VOICEVOX で実合成（per-line wav を scratchpad に書き出し。
 # エンジン localhost:50021 が無ければ「未確認」と報告して exit 0）
-nbb --classpath src tools/synth_episode.cljk content/pi-monte-carlo.edn
+kbb --backend sci --classpath src tools/synth_episode.cljk content/pi-monte-carlo.edn
 
 # チャンネル現況レポート（episode 数・series 分布・audit・sim ベンチ・次 topic・
 # 実 IO 到達状況を 1 コマンドで。既存部品の集約、新規 episode は作らない）
-nbb --classpath src tools/daily_report.cljk
+kbb --backend sci --classpath src tools/daily_report.cljk
 
 # 全 episode の台本音声を一括合成（順次、per-episode ディレクトリに wav。
 # エンジン localhost:50021 が無ければ未確認で exit 0）
-nbb --classpath src tools/synth_all.cljk
+kbb --backend sci --classpath src tools/synth_all.cljk
 
 # 合成 wav の尺を計測 → factcheck の duration facts に供給（--all で全 episode）。
 # ナレーション尺は最終動画尺の下限（間・BGM・視覚が未加算）
-nbb --classpath src tools/measure_audio.cljk --all
+kbb --backend sci --classpath src tools/measure_audio.cljk --all
 
 # 生成物（合成音声/scene）を DataLad/git-annex で永続化（companion asset dataset →
 # kotoba-annex external special remote。大容量は git 履歴に入れない）
-nbb tools/persist_assets.cljk --all                        # directory store（ローカル）
+kbb --backend sci tools/persist_assets.cljk --all                        # directory store（ローカル）
 
 # kotobase.net に永続化（CACAO 自己 mint。鍵は自己生成なので token 受け渡し不要。
 # chunk=32KiB 自動。実測: pi episode 9 wav を kotobase.net に永続化・fsck 9/9 ok）
-KOTOBASE_ENDPOINT=https://kotobase.net nbb tools/persist_assets.cljk --all
+KOTOBASE_ENDPOINT=https://kotobase.net kbb --backend sci tools/persist_assets.cljk --all
 ```
 
 CI（`.github/workflows/ci.yml`）は push / PR で上記の nbb テスト + self-audit を

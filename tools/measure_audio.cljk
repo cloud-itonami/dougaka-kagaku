@@ -1,5 +1,5 @@
 ;; 合成済み wav の尺を計測し、factcheck の duration facts に供給:
-;;   nbb --classpath src tools/measure_audio.cljk [content/pi-monte-carlo.edn | --all]
+;;   kbb --backend sci --classpath src tools/measure_audio.cljk [content/pi-monte-carlo.edn | --all]
 ;; scratchpad の kagaku-audio-<episode>/line-*.wav の RIFF ヘッダを読み、
 ;; PCM data チャンクのバイト数から各 line の尺を算出して episode 合計尺を出す。
 ;; ⚠ ナレーション尺は最終動画尺の**下限**（間・BGM・視覚ビートが未加算）。

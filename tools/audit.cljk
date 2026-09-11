@@ -1,5 +1,5 @@
 ;; episode 横断 self-audit の CI runner:
-;;   nbb --classpath src tools/audit.cljk
+;;   kbb --backend sci --classpath src tools/audit.cljk
 ;; content/*.edn（*-script.edn を除く）を全部読み、各 episode を kagaku.audit で
 ;; 検査して findings を表示。1 つでも pass? が false なら exit 1（CI ゲート）。
 (ns audit
