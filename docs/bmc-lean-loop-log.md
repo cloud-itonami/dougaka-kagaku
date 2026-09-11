@@ -420,7 +420,7 @@ episode 3本、self-audit mean-score 97%（citation 2件 PENDING が唯一の減
 
 **Learn（実際に発火した実害 1 件）**:
 
-- **`npx --yes nbb --classpath src:test test/run.cljk` が失敗**。npx が
+- **`npx --yes kbb --backend sci --classpath src:test test/run.cljk` が失敗**。npx が
   スラッシュ入りスクリプトパス `test/run.cljk` を **パッケージ名
   `github:test/run.cljk` と誤解**して install を試み、コケた（design-quality の
   ci.yml は `-m ns.name` 形式だったのでこの罠を踏んでいなかった）。
@@ -448,7 +448,7 @@ CI と同一の nbb コマンドが緑であることのみ確認済み**。無�
   GitHub Actions 上の実行は repo 設定で無効なので実緑は得られていない（unknown
   でなく、明確に「動かない」）。** 無人運転の自動品質ゲートにするには (a) repo の
   Actions を有効化する（オーナー操作）か (b) ローカル/cron 側で
-  `nbb tools/audit.cljk` を回す運用にする、のどちらかが要る。follow-up。
+  `kbb --backend sci tools/audit.cljk` を回す運用にする、のどちらかが要る。follow-up。
 - workflow file 自体は正しい（ローカルで同一コマンド緑を確認済み）ので、
   Actions を有効化すれば動く見込み。yml は残置し、有効化を follow-up とする。
 

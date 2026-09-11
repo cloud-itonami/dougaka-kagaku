@@ -1,5 +1,5 @@
 ;; scene の render 実験:
-;;   nbb --classpath src tools/try_render.cljk content/tsuki-half-distance.edn [out.svg]
+;;   kbb --backend sci --classpath src tools/try_render.cljk content/tsuki-half-distance.edn [out.svg]
 ;; episode の scene snapshot を非-authoritative な 2D SVG サムネイルに落として書き出す。
 ;;
 ;; ⚠ これは authoritative な 3D render ではない。実 render 経路は WebGPU/kami-engine
