@@ -1,6 +1,6 @@
 (ns kagaku.audio
   "合成 wav の尺（duration）計算。純関数（byte 数からの算術のみ、IO なし）。
-   実ファイル読取は :exec 側（tools/measure_audio.cljs）。
+   実ファイル読取は :exec 側（tools/measure_audio.cljk）。
 
    目的: 合成済みナレーション wav の実尺を出し、factcheck の check-duration
    （render 後の facts）に**部分的な実データ**として供給する。ただし

@@ -1,5 +1,5 @@
 ;; VOICEVOX 実 IO 実験（実 IO 配線の最初の一歩）:
-;;   nbb --classpath src tools/try_voice.cljs ["セリフ"] [--speaker N]
+;;   nbb --classpath src tools/try_voice.cljk ["セリフ"] [--speaker N]
 ;; kagaku.voice/line-plan が返す audio-query-url/synthesis-url を実際に叩き、
 ;; 1 行を wav 化して bytes 長を報告する。plan の contract が実エンジンで通るかの実測。
 ;; エンジン未起動/接続不可なら「未確認」と正直に報告して exit 0（環境依存で実害でない）。

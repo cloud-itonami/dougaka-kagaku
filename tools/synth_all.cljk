@@ -1,5 +1,5 @@
 ;; 全 episode の台本音声を一括合成（human-review 用音声を全部揃える）:
-;;   nbb --classpath src tools/synth_all.cljs
+;;   nbb --classpath src tools/synth_all.cljk
 ;; content/*.edn（台本あり）を順次、実 VOICEVOX（localhost:50021）で per-line wav 化。
 ;; citation PENDING で factcheck reject の episode も**台本自体は合成可能**なので全部。
 ;; エンジンへ過負荷をかけないよう episode も line も順次。未起動なら未確認で exit 0。

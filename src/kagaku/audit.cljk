@@ -3,7 +3,7 @@
    fitness function（network-isekai isekai.ux.audit / design-quality.audit の
    思想を移植）。LLM/browser 不要、純データ。各 axis は 0..1 score と具体的
    findings を返し、`audit-episode` が weighted 集約する。CI で content/*.edn を
-   全部 1 コマンド検査（tools/audit.cljs）して、episode 追加時の回帰を防ぐ。
+   全部 1 コマンド検査（tools/audit.cljk）して、episode 追加時の回帰を防ぐ。
 
    ここは既存 validate 群（scenario/script/derived/scene）の再実行に加え、
    **spec レベルの新チェック** を持つ:

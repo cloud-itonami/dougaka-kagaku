@@ -1,5 +1,5 @@
 ;; episode の台本全行を VOICEVOX で実合成（実 IO の実用化）:
-;;   nbb --classpath src tools/synth_episode.cljs content/pi-monte-carlo.edn
+;;   nbb --classpath src tools/synth_episode.cljk content/pi-monte-carlo.edn
 ;; 展開済み台本の各 line を kagaku.voice/plan-script → 実 VOICEVOX（localhost:50021）
 ;; で per-line wav 化し、scratchpad の episode 別ディレクトリに書き出す。
 ;; iter13 の try_voice（1 行）を台本全行に拡張。数値は claim から転記済み
