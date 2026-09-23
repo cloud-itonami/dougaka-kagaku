@@ -1,5 +1,5 @@
 (ns kagaku.rom-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kagaku.rom :as rom]
             [kagaku.simcase]))
 

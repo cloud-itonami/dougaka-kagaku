@@ -1,5 +1,5 @@
 (ns kagaku.scenario-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kagaku.scenario :as scenario]))
 
 (def valid-episode

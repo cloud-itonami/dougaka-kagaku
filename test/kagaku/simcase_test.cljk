@@ -1,5 +1,5 @@
 (ns kagaku.simcase-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kagaku.simcase :as simcase]))
 
 (def tidal-case

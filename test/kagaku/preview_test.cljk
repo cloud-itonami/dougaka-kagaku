@@ -1,5 +1,5 @@
 (ns kagaku.preview-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.lang.text :as str]
             [kagaku.scene :as scene]
             [kagaku.preview :as preview]))

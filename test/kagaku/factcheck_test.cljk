@@ -1,5 +1,5 @@
 (ns kagaku.factcheck-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kagaku.factcheck :as factcheck]
             [kagaku.pipeline :as pipeline]))
 
