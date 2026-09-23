@@ -1,5 +1,5 @@
 (ns kagaku.audio-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kagaku.audio :as audio]))
 
 (deftest pcm-duration
