@@ -13,7 +13,7 @@
 
    3D は repo-wide 規則どおり kami-engine stack のみ（ADR-2607102200）。
    独自 renderer / Three.js / DOM 疑似3D を作らない。"
-  (:require [clojure.set :as set]))
+  (:require [kotoba.lang.coll :as set]))
 
 ;; --- authority mirror: kami.scene の attribute 語彙（使う分のみ） -----------
 (def known-attrs
