@@ -5,7 +5,7 @@
 ;; 次の topic を 1 件選び、episode 種を表示する。決定論（乱数・時刻なし）。
 (ns next-topic
   (:require [cljs.reader :as reader]
-            [clojure.pprint :refer [pprint]]
+            [kotoba.pprint :refer [pprint]]
             [kotoba.lang.text :as str]
             [kagaku.compose :as compose]
             ["fs" :as fs]))
