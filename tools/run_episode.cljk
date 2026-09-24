@@ -8,7 +8,7 @@
 ;; gate :rejected を「失敗」と誤読させないため）。
 (ns run-episode
   (:require [cljs.reader :as reader]
-            [clojure.pprint :refer [pprint]]
+            [kotoba.pprint :refer [pprint]]
             [kotoba.lang.text :as str]
             [kagaku.derived :as derived]
             [kagaku.rom :as rom]
