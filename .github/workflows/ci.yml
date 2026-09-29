@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      # nbb が第一経路（CLAUDE.md ランタイム優先順位）。JVM 経路は互換として
+      # nbb が第一経路（AGENTS.md ランタイム優先順位）。JVM 経路は互換として
       # clojure -M:test でも回せるが、CI は nbb を正とする。
       # npx はスラッシュ入りスクリプトパス（test/run.cljk）をパッケージ名と
       # 誤解するため、グローバル install してから nbb を直接呼ぶ。
