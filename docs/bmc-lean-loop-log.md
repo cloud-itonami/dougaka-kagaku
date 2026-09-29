@@ -1,7 +1,7 @@
 # ai-gftd-dougaka-kagaku — BMC / Lean Loop 反復ログ（standalone パターン）
 
 superproject の共有 BMC システム（`70-tools/bmc/`、gftdcojp 11 プロダクト）には
-意図的に登録しない（base datoms への追加は人間レビュー事項 — CLAUDE.md BMC 節、
+意図的に登録しない（base datoms への追加は人間レビュー事項 — AGENTS.md BMC 節、
 先例: local-murakumo ADR-2607121600 / net-babiniku ADR-2607122300 / dougaka-kodomo）。
 このファイルが repo-local の append-only 反復ログ。既存 iteration は編集・削除しない。
 **捏造ゼロ**: 計測していない値は unknown と書く。outcome/metric を LLM が推定で
